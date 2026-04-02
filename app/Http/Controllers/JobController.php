@@ -210,26 +210,25 @@ class JobController extends Controller
             ->with('success', 'Service created successfully.');
     }
     // Update service
-    public function editService(Request $request, $id)
+    public function updateService(Request $request, Services $service)
     {
-        $services = Services::latest()->findOrFail($id);
-
         // Validate input
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:services,name,' . $services->id,
+            'name' => 'required|string|max:255|unique:services,name,' . $service->id,
             'description' => 'nullable|string',
         ]);
 
         // Update service
-        $services->update($validated);
+        $service->update($validated);
 
         return redirect()->route('jobs.services')
                          ->with('success', 'Service updated successfully');
     }
+
     public function destroyService(Services $service)
     {
-        if ($service->categories()->exists() || $service->subcategories()->exists()) {
-            return redirect()->route('services.index')->with('error', 'Cannot delete service with assigned categories or subcategories.');
+        if ($service->categories()->exists()) {
+            return redirect()->route('jobs.services')->with('error', 'Cannot delete service with assigned categories.');
         }
 
         $service->delete();
