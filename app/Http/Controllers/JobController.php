@@ -191,8 +191,40 @@ class JobController extends Controller
     // Services
     public function services()
     {
-        $services = Services::with('categories', 'subcategories')->get();
+        $services = Services::latest()->paginate(10); // or any number
         return view('client.jobs.services', compact('services'));
+    }
+    public function storeService(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:services,name',
+            'description' => 'nullable|string',
+        ]);
+
+        Services::create([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('jobs.services')
+            ->with('success', 'Service created successfully.');
+    }
+    // Update service
+    public function editService(Request $request, $id)
+    {
+        $services = Services::latest()->findOrFail($id);
+
+        // Validate input
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:services,name,' . $services->id,
+            'description' => 'nullable|string',
+        ]);
+
+        // Update service
+        $services->update($validated);
+
+        return redirect()->route('jobs.services')
+                         ->with('success', 'Service updated successfully');
     }
     public function destroyService(Services $service)
     {
@@ -201,6 +233,6 @@ class JobController extends Controller
         }
 
         $service->delete();
-        return redirect()->route('services.index')->with('success', 'Service deleted successfully.');
+        return redirect()->route('jobs.services')->with('success', 'Service deleted successfully.');
     }
 }

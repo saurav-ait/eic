@@ -134,6 +134,10 @@ Route::middleware(['checkLogin'])->group(function () {
         Route::post('/jobs/passport-status', [JobController::class, 'updatePassportStatus'])->name('jobs.passport.status.update');
         // Services
         Route::get('/jobs/services', [JobController::class, 'services'])->name('jobs.services');
+        Route::post('/services', [JobController::class, 'storeService'])->name('services.store');
+        Route::get('services/{service}/edit', [JobController::class, 'editService'])->name('services.edit');
+    Route::put('services/{service}', [JobController::class, 'editService'])->name('services.update');
+        Route::post('/services/delete/{id}', [JobController::class, 'destroyService'])->name('services.destroy');
 
         /*
         |---------------- CATEGORY ACTIONS ----------------|

@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    {{-- SUCCESS / ERROR MESSAGE --}}
+    {{-- SUCCESS / ERROR --}}
     @if(session('success'))
         <div class="alert alert-success form-status">{{ session('success') }}</div>
     @elseif(session('error'))
@@ -23,7 +23,7 @@
 
     <div class="content-section">
 
-        {{-- ADD SERVICE FORM (TOGGLE) --}}
+        {{-- ADD SERVICE FORM --}}
         <div id="add-service-form" class="panel-card" style="display:none;">
             <h3>Add New Service</h3>
             <form action="{{ route('services.store') }}" method="POST">
@@ -44,29 +44,26 @@
                         <th style="width:50px;">#</th>
                         <th>Name</th>
                         <th>Description</th>
-                        <th style="width:220px;">Action</th>
+                        <th style="width:180px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($services as $index => $service)
                         <tr>
-                            <td>{{ $index+1 }}</td>
+                            <td>{{ $services->firstItem() + $index }}</td>
                             <td>{{ $service->name }}</td>
                             <td>{{ $service->description ?? '—' }}</td>
                             <td class="action-cell">
                                 <div class="action-row">
-                                    {{-- EDIT --}}
-                                    <a href="{{ route('services.edit', $service->id) }}" class="btn success btn-xs">✎ Edit</a>
+                                    {{-- EDIT BUTTON --}}
+                                    <button class="btn success btn-xs" onclick="openEditForm({{ $service->id }}, '{{ addslashes($service->name) }}', '{{ addslashes($service->description) }}')">✎ Edit</button>
 
-                                    {{-- DELETE (PREVENT IF ASSIGNED) --}}
+                                    {{-- DELETE BUTTON --}}
                                     <form action="{{ route('services.destroy', $service->id) }}" method="POST" 
-                                        onsubmit="return confirm('Are you sure you want to delete this service?')">
+                                        onsubmit="return confirm('Are you sure you want to delete this service?')" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn danger btn-xs"
-                                        @if($service->categories->count() > 0 || $service->subcategories->count() > 0) 
-                                            disabled title="Cannot delete assigned service"
-                                        @endif>✕ Delete</button>
+                                        <button type="submit" class="btn danger btn-xs">✕ Delete</button>
                                     </form>
                                 </div>
                             </td>
@@ -75,25 +72,56 @@
                 </tbody>
             </table>
 
+            {{-- PAGINATION --}}
             <div style="margin-top:15px;">
-                {{ $services->withQueryString()->links() }}
+                {{ $services->links() }}
             </div>
+        </div>
+
+        {{-- EDIT SERVICE FORM MODAL --}}
+        <div id="edit-service-form" class="panel-card" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); width:400px; z-index:1000;">
+            <h3>Edit Service</h3>
+            <form id="editServiceForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="text" name="name" id="editServiceName" placeholder="Service Name" required class="input-field">
+                    <textarea name="description" id="editServiceDescription" placeholder="Service Description" class="input-field" rows="3"></textarea>
+                    <div style="display:flex; gap:10px;">
+                        <button type="submit" class="btn-success">Update Service</button>
+                        <button type="button" class="btn-danger" onclick="closeEditForm()">Cancel</button>
+                    </div>
+                </div>
+            </form>
         </div>
 
     </div>
 </main>
 
-{{-- JS TOGGLE ADD FORM --}}
+{{-- JS --}}
 <script>
-document.getElementById('add-service-btn').addEventListener('click', function(){
-    const form = document.getElementById('add-service-form');
-    form.style.display = (form.style.display === 'none') ? 'block' : 'none';
-});
+function openEditForm(id, name, description) {
+    const form = document.getElementById('edit-service-form');
+    form.style.display = 'block';
+
+    // Set values safely
+    document.getElementById('editServiceName').value = name;
+    document.getElementById('editServiceDescription').value = description || '';
+
+    // Build URL using Laravel route helper
+    const routeTemplate = "{{ route('services.update', ':id') }}";
+    const url = routeTemplate.replace(':id', id);
+
+    document.getElementById('editServiceForm').action = url;
+}
+
+function closeEditForm() {
+    document.getElementById('edit-service-form').style.display = 'none';
+}
 </script>
 
 {{-- STYLES --}}
 <style>
-/* PANEL CARD */
 .panel-card {
     background: #fff;
     padding: 20px;
@@ -101,8 +129,6 @@ document.getElementById('add-service-btn').addEventListener('click', function(){
     margin-bottom: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
-
-/* TABLE CARD */
 .table-card {
     background: #fff;
     border-radius: 10px;
@@ -110,59 +136,33 @@ document.getElementById('add-service-btn').addEventListener('click', function(){
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     overflow-x: auto;
 }
-
-/* TABLE */
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
 }
-
 th, td {
     padding: 12px;
     border-bottom: 1px solid #eee;
 }
-
 thead th {
     background: #1E4BA6;
     color: white;
     font-weight: 600;
     text-align: left;
 }
-
 tr:hover { background: #f3f6fb; }
-
-/* ACTIONS */
-.action-cell { min-width: 220px; }
-.action-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.btn-xs { padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; border:none; }
-.btn.success { background: #38a169; color:white; } .btn.success:hover{ background:#2f855a; }
-.btn.danger { background: #e53e3e; color:white; } .btn.danger:hover{ background:#c53030; }
+.action-cell { min-width:180px; }
+.action-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.btn-xs { padding:4px 8px; font-size:12px; border-radius:4px; cursor:pointer; border:none; }
+.btn.success { background:#38a169; color:rgb(255, 255, 255); } .btn.success:hover{ background:#2f855a; }
+.btn.danger { background:#e53e3e; color:white; } .btn.danger:hover{ background:#c53030; }
 .btn-primary { background-color:#1E4BA6; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; }
 .btn-primary:hover { background-color:#163A7A; }
-
-/* INPUT FIELDS */
-.input-field {
-    padding: 10px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    width:100%;
-    font-size:14px;
-}
-
-/* ALERTS */
-.form-status {
-    padding:10px;
-    border-radius:6px;
-    margin-bottom:15px;
-    text-align:center;
-}
+.input-field { padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; font-size:14px; }
+.form-status { padding:10px; border-radius:6px; margin-bottom:15px; text-align:center; }
 .alert-success { background:#d1fae5; color:#065f46; }
 .alert-error { background:#fed7d7; color:#c53030; }
-
-/* RESPONSIVE */
-@media(max-width:768px){
-    .action-cell { min-width:100%; }
-}
+@media(max-width:768px){ .action-cell { min-width:100%; } }
 </style>
 @endsection
