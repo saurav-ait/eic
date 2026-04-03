@@ -2,9 +2,10 @@
 
 @section('content')
 <main class="main-content">
-    <div class="top-bar">
+    <div class="top-bar" style="justify-content: space-between; display: flex; align-items: center; flex-wrap: wrap; gap:10px;">
         <div class="top-bar-title">
             <h1>Passport Details</h1>
+            <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
 
         <!-- ACTION BUTTONS -->
@@ -31,28 +32,28 @@
     <!-- DOCUMENT LIST -->
     <div class="content-section" style="margin-top:30px;">
         <h3>Documents</h3>
-        <table style="width:100%; border-collapse:collapse;">
+        <table class="table">
             <thead>
-                <tr style="background:#1E4BA6; color:white;">
-                    <th style="padding:10px;">Type</th>
-                    <th style="padding:10px;">File</th>
-                    <th style="padding:10px; text-align:center;">Actions</th>
+                <tr>
+                    <th>Type</th>
+                    <th>File</th>
+                    <th style="text-align:center;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($passport->documents as $doc)
                     <tr>
-                        <td style="padding:10px;">{{ $doc->type }}</td>
-                        <td style="padding:10px;">
+                        <td>{{ $doc->type }}</td>
+                        <td>
                             <a href="{{ asset('public/storage/'.$doc->file) }}" target="_blank">View</a>
                         </td>
-                        <td style="padding:10px; text-align:center;">
-                            <a href="{{ asset('public/storage/'.$doc->file) }}" download class="btn-primary" style="margin-right:5px; padding:5px 10px;">Download</a>
+                        <td style="text-align:center;">
+                            <a href="{{ asset('public/storage/'.$doc->file) }}" download class="btn-primary btn-sm">Download</a>
 
                             <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" style="display:inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="background:red; color:white; border:none; padding:5px 10px;">Delete</button>
+                                <button type="submit" class="btn-danger btn-sm">Delete</button>
                             </form>
                         </td>
                     </tr>
@@ -77,9 +78,7 @@
                             <source src="{{ asset('public/storage/'.$video->file) }}" type="video/mp4">
                             Your browser does not support HTML5 video.
                         </video>
-                        <a href="{{ asset('public/storage/'.$video->file) }}" download
-                           class="btn-primary"
-                           style="display:inline-block; margin-top:10px; width:100%; text-align:center; padding:8px 0;">
+                        <a href="{{ asset('public/storage/'.$video->file) }}" download class="btn-primary btn-full" style="display:inline-block; margin-top:10px; width:100%; text-align:center;">
                             Download
                         </a>
                     @elseif($video->url)
@@ -100,7 +99,7 @@
                     <form action="{{ route('videos.destroy', $video->id) }}" method="POST" style="margin-top:5px;">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn-primary" style="background:red; width:100%; padding:8px 0; margin-top:5px;">Delete</button>
+                        <button type="submit" class="btn-danger" style="width:100%;">Delete</button>
                     </form>
                 </div>
             @empty
@@ -110,4 +109,66 @@
     </div>
 
 </main>
+
+{{-- Styles --}}
+<style>
+.main-content {
+    padding: 20px;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #1E4BA6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+.btn-primary:hover { background-color: #163A7A; }
+
+.btn-primary.btn-sm { padding: 5px 10px; font-size:12px; }
+
+.btn-primary.btn-full { padding: 8px 0; }
+
+.btn-danger {
+    background-color: #E74C3C;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+.btn-danger:hover { background-color: #C0392B; }
+
+.btn-danger.btn-sm { padding:5px 10px; font-size:12px; }
+
+/* Table */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+.table th {
+    background: #1E4BA6;
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* Responsive */
+@media(max-width:768px){
+    .top-bar { flex-direction: column; align-items: flex-start; gap:10px; }
+    .table th, .table td { font-size: 12px; padding:6px; }
+    .btn-primary, .btn-danger { font-size:12px; padding:6px 10px; }
+}
+</style>
 @endsection

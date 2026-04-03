@@ -14,8 +14,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'checkLogin' => \App\Http\Middleware\CheckAuth::class,
             'guestOnly'  => \App\Http\Middleware\RedirectIfAuthenticated::class,
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role'       => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\SetSecurityHeaders::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: []);
     })
     
     ->withExceptions(function (Exceptions $exceptions): void {

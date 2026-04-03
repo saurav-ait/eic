@@ -81,6 +81,7 @@
                                 {{-- EDIT --}}
                                 <form action="{{ route('jobs.status.update',$status->id) }}" method="POST" class="inline-form">
                                     @csrf
+                                    @method('PUT')
                                     <input type="text" name="name" value="{{ $status->name }}">
                                     <button class="btn-edit">Update</button>
                                 </form>
@@ -89,6 +90,7 @@
                                 <form action="{{ route('jobs.status.delete',$status->id) }}" method="POST"
                                       onsubmit="return confirm('Delete this status?')">
                                     @csrf
+                                    @method('DELETE')
                                     <button class="btn-delete">Delete</button>
                                 </form>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Passport;
 use App\Models\Document;
 
@@ -32,9 +33,8 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
-        // Delete file from storage
-        if ($document->file && file_exists(storage_path('app/public/' . $document->file))) {
-            unlink(storage_path('app/public/' . $document->file));
+        if ($document->file && Storage::disk('public')->exists($document->file)) {
+            Storage::disk('public')->delete($document->file);
         }
 
         $document->delete();

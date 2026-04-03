@@ -16,8 +16,8 @@ class JobController extends Controller
 {
     public function index()
     {
-        $categories = JobCategory::with('subcategories.passports')->get();
-        $passports = \App\Models\Passport::all();
+        $categories = JobCategory::with('subcategories.passports', 'service')->get();
+        $passports = Passport::all();
 
         $subcategoryPassports = JobSubcategory::with('passports')->get()->map(function($sub){
             return [
@@ -25,9 +25,9 @@ class JobController extends Controller
                 'name' => $sub->name,
                 'passports' => $sub->passports->map(function($p){
                     return [
-                        'id' => $p->id,
-                        'passport_no' => $p->passport_no,
-                        'name' => $p->name,
+                        'id'              => $p->id,
+                        'passport_number' => $p->passport_number,
+                        'name'            => $p->familyname . ' ' . $p->givenname,
                     ];
                 }),
             ];
@@ -36,33 +36,37 @@ class JobController extends Controller
         return view('client.jobs.index', compact('categories', 'passports', 'subcategoryPassports'));
     }
 
-    /* ================= CATEGORY ================= */
+    /* ================= CATEGORY STORE ================= */
 
     public function storeCategory(Request $request)
     {
         $request->validate([
-            'name' => 'required|unique:job_categories,name'
+            'name' => 'required|unique:job_categories,name',
+            'service_id' => 'required|exists:services,id'
         ]);
 
         JobCategory::create([
             'name' => $request->name,
             'category_description' => $request->category_description,
+            'service_id' => $request->service_id,
         ]);
 
         return back()->with('success', 'Category created successfully');
     }
 
-    /* ================= CATEGORY ================= */
+    /* ================= CATEGORY UPDATE ================= */
 
     public function updateCategory(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|unique:job_categories,name,' . $id
+            'name' => 'required|unique:job_categories,name,' . $id,
+            'service_id' => 'required|exists:services,id'
         ]);
 
         JobCategory::findOrFail($id)->update([
             'name' => $request->name,
             'category_description' => $request->category_description,
+            'service_id' => $request->service_id,
         ]);
 
         return back()->with('success', 'Category updated');
@@ -88,7 +92,7 @@ class JobController extends Controller
             'category_id' => 'required|exists:job_categories,id'
         ]);
 
-        \App\Models\JobSubcategory::create([
+        JobSubcategory::create([
             'name' => $request->name,
             'job_category_id' => $request->category_id,
             'subcategory_description' => $request->subcategory_description,
@@ -191,7 +195,7 @@ class JobController extends Controller
     // Services
     public function services()
     {
-        $services = Services::latest()->paginate(10); // or any number
+        $services = Services::with('categories')->latest()->paginate(10);
         return view('client.jobs.services', compact('services'));
     }
     public function storeService(Request $request)
@@ -227,10 +231,6 @@ class JobController extends Controller
 
     public function destroyService(Services $service)
     {
-        if ($service->categories()->exists()) {
-            return redirect()->route('jobs.services')->with('error', 'Cannot delete service with assigned categories.');
-        }
-
         $service->delete();
         return redirect()->route('jobs.services')->with('success', 'Service deleted successfully.');
     }

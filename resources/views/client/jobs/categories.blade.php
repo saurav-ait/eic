@@ -34,6 +34,13 @@
             <form action="{{ route('jobs.category.store') }}" method="POST" class="form">
                 @csrf
 
+                <select name="service_id" required>
+                    <option value="">Select Service</option>
+                    @foreach($services as $service)
+                        <option value="{{ $service->id }}">{{ $service->name }}</option>
+                    @endforeach
+                </select>
+
                 <input type="text" name="name" placeholder="Category Name" required>
 
                 <textarea name="category_description" placeholder="Description (optional)"></textarea>
@@ -47,6 +54,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Service</th>
                             <th>Name</th>
                             <th>Description</th>
                             <th width="100">Action</th>
@@ -56,6 +64,10 @@
                         @forelse($categories as $index => $category)
                         <tr>
                             <td>{{ $index + 1 }}</td>
+
+                            <td>
+                                <span class="tag">{{ $category->service?->name ?? '—' }}</span>
+                            </td>
 
                             <td>
                                 <strong>{{ $category->name }}</strong>
@@ -72,13 +84,14 @@
                                       method="POST"
                                       onsubmit="return confirm('Delete category?')">
                                     @csrf
+                                    @method('DELETE')
                                     <button class="btn danger sm">Delete</button>
                                 </form>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="empty">No categories found</td>
+                            <td colspan="5" class="empty">No categories found</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -154,6 +167,7 @@
                                           method="POST"
                                           onsubmit="return confirm('Delete subcategory?')">
                                         @csrf
+                                        @method('DELETE')
                                         <button class="btn danger sm">Delete</button>
                                     </form>
                                 </td>

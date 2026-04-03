@@ -36,12 +36,14 @@
                     <label>Subcategory</label>
                     <select name="subcategory_id" required>
                         <option value="">Select Subcategory</option>
-                        @foreach($categories as $category)
-                            <optgroup label="{{ $category->name }}">
-                                @foreach($category->subcategories as $sub)
-                                    <option value="{{ $sub->id }}">
-                                        {{ $sub->name }}
-                                    </option>
+                        @foreach($services as $service)
+                            <optgroup label="🔹 {{ $service->name }}">
+                                @foreach($service->categories as $category)
+                                    @foreach($category->subcategories as $sub)
+                                        <option value="{{ $sub->id }}">
+                                            {{ $category->name }} → {{ $sub->name }}
+                                        </option>
+                                    @endforeach
                                 @endforeach
                             </optgroup>
                         @endforeach

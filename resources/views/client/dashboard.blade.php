@@ -1,228 +1,213 @@
 @extends('admin-master')
 
 @section('content')
-
 <main class="main-content">
 
     {{-- HEADER --}}
-    <div class="top-bar">
+    <div class="top-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div class="top-bar-title">
-            <h1>Dashboard Overview</h1>
+            <h1>Dashboard</h1>
             <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
+        <div>
+            <button onclick="location.reload()" class="btn-primary">Refresh Now</button>
+        </div>
     </div>
 
-    {{-- KPI CARDS --}}
-    <div class="dashboard-grid">
-
+    {{-- STATS CARDS --}}
+    <div class="stats-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:30px;">
         <div class="card">
-            <div class="card-icon">👥</div>
-            <div class="card-title">Total Users</div>
-            <div class="card-value">{{ $totalUsers }}</div>
+            <h3>Total Services</h3>
+            <p class="stat">{{ $servicesCount ?? 0 }}</p>
         </div>
-
         <div class="card">
-            <div class="card-icon">📘</div>
-            <div class="card-title">Total Passports</div>
-            <div class="card-value">{{ $totalPassports }}</div>
+            <h3>Total Categories</h3>
+            <p class="stat">{{ $categoriesCount ?? 0 }}</p>
         </div>
-
         <div class="card">
-            <div class="card-icon">✅</div>
-            <div class="card-title">Assigned</div>
-            <div class="card-value">{{ $assignedPassports }}</div>
+            <h3>Total Subcategories</h3>
+            <p class="stat">{{ $subcategoriesCount ?? 0 }}</p>
         </div>
-
         <div class="card">
-            <div class="card-icon">📂</div>
-            <div class="card-title">Categories</div>
-            <div class="card-value">{{ $categories }}</div>
+            <h3>Total Passports</h3>
+            <p class="stat">{{ $passportsCount ?? 0 }}</p>
         </div>
-
     </div>
 
-    {{-- MAIN GRID --}}
-    <div class="dashboard-layout">
+    {{-- QUICK ACTIONS --}}
+    <div class="quick-actions" style="display:flex; flex-wrap:wrap; gap:15px; margin-bottom:30px;">
+        <a href="{{ route('jobs.services') }}" class="btn-primary">Manage Services</a>
+        <a href="{{ route('jobs.categories') }}" class="btn-primary">Manage Categories</a>
+        <a href="{{ route('jobs.assign') }}" class="btn-primary">Manage Subcategories</a>
+        <a href="{{ route('passports.index') }}" class="btn-primary">Manage Passports</a>
+        <a href="{{ route('jobs.manage') }}" class="btn-primary">Manage Jobs</a>
+    </div>
 
-        {{-- LEFT: RECENT ACTIVITY --}}
-        <div class="content-card">
-            <h3>Recent Passports</h3>
+    {{-- RECENT ACTIVITY TABLE --}}
+    <div class="table-card">
+        <h3>Recent Passport Assignments</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Passport</th>
+                    <th>Subcategory</th>
+                    <th>Category</th>
+                    <th>Assigned At</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentAssignments as $index => $assignment)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $assignment->passport_number }} ({{ $assignment->givenname.' '.$assignment->familyname }})</td>
+                        <td>{{ $assignment->subcategory->name ?? '—' }}</td>
+                        <td>{{ $assignment->subcategory->category->name ?? '—' }}</td>
+                        <td>{{ $assignment->created_at->format('d M, Y H:i') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" style="text-align:center;">No recent assignments.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-            <table>
+    {{-- PASSPORT STATUS MONITOR --}}
+    <div class="section-title">Passport Status Monitor</div>
+
+    {{-- STATUS SUMMARY CARDS --}}
+    <div class="status-cards">
+        @forelse($statuses as $status)
+            <div class="status-card">
+                <div class="status-badge">{{ $status->name }}</div>
+                <div class="status-count">{{ $status->passports_count }}</div>
+                <div class="status-label">Passports</div>
+            </div>
+        @empty
+        @endforelse
+        <div class="status-card unstatused">
+            <div class="status-badge" style="background:#e2e8f0; color:#555;">No Status</div>
+            <div class="status-count" style="color:#888;">{{ $unstatusedCount }}</div>
+            <div class="status-label">Passports</div>
+        </div>
+    </div>
+
+    {{-- STATUS PASSPORT TABLE --}}
+    <div class="table-card" style="margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Passport Status Overview</h3>
+            <a href="{{ route('jobs.passport.status') }}" class="btn-primary" style="font-size:12px; padding:7px 12px;">Manage Status</a>
+        </div>
+
+        {{-- FILTER --}}
+        <div style="margin-bottom:12px;">
+            <select id="statusFilter" onchange="filterStatusTable()" style="padding:7px 10px; border-radius:5px; border:1px solid #ccc; font-size:13px;">
+                <option value="">All Statuses</option>
+                @foreach($statuses as $status)
+                    <option value="{{ $status->name }}">{{ $status->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table id="statusTable">
                 <thead>
                     <tr>
-                        <th>Passport</th>
+                        <th>#</th>
+                        <th>Passport No.</th>
                         <th>Name</th>
                         <th>Status</th>
+                        <th>Subcategory</th>
+                        <th>Updated At</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($recentPassports as $passport)
-                        <tr>
+                    @forelse($statusPassports as $index => $passport)
+                        <tr data-status="{{ $passport->status->name ?? '' }}">
+                            <td>{{ $index + 1 }}</td>
                             <td><strong>{{ $passport->passport_number }}</strong></td>
                             <td>{{ $passport->givenname }} {{ $passport->familyname }}</td>
                             <td>
-                                @if($passport->job_subcategory_id)
-                                    <span class="badge success">Assigned</span>
-                                @else
-                                    <span class="badge pending">Pending</span>
-                                @endif
+                                <span class="status-pill">{{ $passport->status->name ?? '—' }}</span>
+                            </td>
+                            <td>{{ $passport->subcategory->name ?? '—' }}</td>
+                            <td>{{ $passport->updated_at->format('d M, Y') }}</td>
+                            <td>
+                                <a href="{{ route('passports.show', $passport) }}" class="btn-sm">View</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3">No recent data</td>
+                            <td colspan="7" style="text-align:center; color:#999;">No passports with status assigned.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        {{-- RIGHT: QUICK ACTIONS --}}
-        <div class="content-card">
-            <h3>Quick Actions</h3>
-
-            <div class="quick-actions">
-                <a href="{{ route('passports.index') }}" class="qa-btn">📘 Manage Passports</a>
-                <a href="{{ route('jobs.assign') }}" class="qa-btn">💼 Assign Passport</a>
-                <a href="{{ route('jobs.categories') }}" class="qa-btn">📂 Categories</a>
-                <a href="{{ route('jobs.status') }}" class="qa-btn">⚙ Status</a>
-            </div>
-        </div>
-
     </div>
 
 </main>
 
-<style>
+{{-- AUTO REFRESH --}}
+<script>
+    setInterval(() => {
+        fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newCards = doc.querySelector('.stats-cards');
+            const oldCards = document.querySelector('.stats-cards');
+            if(newCards && oldCards) oldCards.innerHTML = newCards.innerHTML;
+        });
+    }, 30000); // every 30 seconds
 
-/* GRID */
-.dashboard-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
-    gap:20px;
-    margin-bottom:25px;
-}
-
-/* CARDS */
-.card {
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
-    transition:0.3s;
-}
-
-.card:hover {
-    transform:translateY(-4px);
-}
-
-.card-icon {
-    font-size:26px;
-    margin-bottom:10px;
-}
-
-.card-title {
-    font-size:13px;
-    color:#777;
-    margin-bottom:5px;
-}
-
-.card-value {
-    font-size:28px;
-    font-weight:700;
-    color:#1E4BA6;
-}
-
-/* MAIN LAYOUT */
-.dashboard-layout {
-    display:grid;
-    grid-template-columns:2fr 1fr;
-    gap:20px;
-}
-
-/* CONTENT CARD */
-.content-card {
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
-}
-
-.content-card h3 {
-    margin-bottom:15px;
-    color:#1E4BA6;
-}
-
-/* TABLE */
-table {
-    width:100%;
-    border-collapse:collapse;
-}
-
-th {
-    background:#1E4BA6;
-    color:#fff;
-    padding:10px;
-    font-size:13px;
-    text-align:left;
-}
-
-td {
-    padding:10px;
-    border-bottom:1px solid #eee;
-    font-size:13px;
-}
-
-/* BADGES */
-.badge {
-    padding:4px 8px;
-    border-radius:20px;
-    font-size:11px;
-    font-weight:600;
-}
-
-.badge.success {
-    background:#d1fae5;
-    color:#065f46;
-}
-
-.badge.pending {
-    background:#fef3c7;
-    color:#92400e;
-}
-
-/* QUICK ACTIONS */
-.quick-actions {
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.qa-btn {
-    display:block;
-    text-decoration:none;
-    background:#f5f7fb;
-    padding:12px;
-    border-radius:6px;
-    font-size:13px;
-    font-weight:600;
-    color:#1E4BA6;
-    transition:0.3s;
-}
-
-.qa-btn:hover {
-    background:#1E4BA6;
-    color:#fff;
-}
-
-/* RESPONSIVE */
-@media(max-width:900px){
-    .dashboard-layout {
-        grid-template-columns:1fr;
+    function filterStatusTable() {
+        const val = document.getElementById('statusFilter').value.toLowerCase();
+        document.querySelectorAll('#statusTable tbody tr').forEach(row => {
+            const status = (row.dataset.status || '').toLowerCase();
+            row.style.display = (!val || status === val) ? '' : 'none';
+        });
     }
+</script>
+
+{{-- STYLES --}}
+<style>
+.main-content { padding:20px; font-family:Arial, sans-serif; }
+.top-bar-title h1 { color:#1E4BA6; margin:0; }
+.top-bar-title p { margin:2px 0 0; color:#555; font-size:14px; }
+.btn-primary { background:#1E4BA6; color:#fff; padding:10px 15px; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; }
+.btn-primary:hover { background:#163A7A; }
+.stats-cards .card { background:#fff; border-radius:10px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.05); text-align:center; }
+.stats-cards .card h3 { margin:0 0 10px; font-size:16px; color:#555; }
+.stats-cards .card .stat { font-size:28px; font-weight:700; color:#1E4BA6; margin:0; }
+.table-card { background:#fff; border-radius:10px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-top:20px; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+thead th { background:#1E4BA6; color:white; font-weight:600; }
+tr:hover { background:#f3f6fb; }
+.quick-actions a { padding:10px 15px; border-radius:6px; background:#1E4BA6; color:#fff; text-decoration:none; }
+.quick-actions a:hover { background:#163A7A; }
+
+/* STATUS MONITOR */
+.section-title { font-size:18px; font-weight:700; color:#1E4BA6; margin:30px 0 15px; }
+.status-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:15px; margin-bottom:10px; }
+.status-card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 4px 10px rgba(0,0,0,0.05); text-align:center; }
+.status-badge { display:inline-block; background:#1E4BA6; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:10px; }
+.status-count { font-size:32px; font-weight:700; color:#1E4BA6; }
+.status-label { font-size:12px; color:#888; margin-top:4px; }
+.unstatused .status-count { color:#888; }
+.status-pill { background:#e3f2fd; color:#1E4BA6; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; }
+.btn-sm { background:#1E4BA6; color:#fff; padding:4px 10px; border-radius:4px; font-size:12px; text-decoration:none; }
+.btn-sm:hover { background:#163A7A; }
+
+@media(max-width:768px) {
+    .stats-cards { grid-template-columns:1fr; }
+    .quick-actions { flex-direction:column; }
+    .status-cards { grid-template-columns:1fr 1fr; }
 }
-
 </style>
-
 @endsection

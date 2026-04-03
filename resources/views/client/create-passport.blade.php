@@ -2,12 +2,12 @@
 
 @section('content')
 <main class="main-content">
-    <div class="top-bar">
+    <div class="top-bar" style="justify-content: space-between; display: flex; align-items: center; flex-wrap: wrap; gap:10px;">
         <div class="top-bar-title">
             <h1>Add New Passport</h1>
             <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
-        <div>
+        <div style="display:flex; gap:10px;">
             <a href="{{ route('passports.index') }}" class="btn-primary">Back to List</a>
         </div>
     </div>
@@ -132,4 +132,93 @@
         </form>
     </div>
 </main>
+
+{{-- Styles --}}
+<style>
+.main-content {
+    padding: 20px;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #1E4BA6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+.btn-primary:hover { background-color: #163A7A; }
+
+/* Form */
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+fieldset {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+legend {
+    font-weight: 700;
+    color: #1E4BA6;
+    padding: 0 10px;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="email"],
+select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="email"]:focus,
+select:focus {
+    outline: none;
+    border-color: #1E4BA6;
+    box-shadow: 0 0 5px rgba(30, 75, 166, 0.3);
+}
+
+/* Alert */
+.alert {
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    background-color: #fed7d7;
+    color: #c53030;
+    border: 1px solid #fc8181;
+}
+
+.alert ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Responsive */
+@media(max-width:768px){
+    .top-bar { flex-direction: column; align-items: flex-start; gap:10px; }
+    input[type="text"],
+    input[type="date"],
+    input[type="email"],
+    select { font-size: 12px; padding: 8px; }
+    .btn-primary { font-size:12px; padding:6px 10px; }
+}
+</style>
 @endsection

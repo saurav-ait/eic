@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Passport;
 use App\Models\Video;
-use Illuminate\Support\Facades\Storage;
 
 class VideoController extends Controller
 {
@@ -44,9 +44,8 @@ class VideoController extends Controller
 
     public function destroy(Video $video)
     {
-        // Delete file from storage
-        if ($video->file && file_exists(storage_path('app/public/' . $video->file))) {
-            unlink(storage_path('app/public/' . $video->file));
+        if ($video->file && Storage::disk('public')->exists($video->file)) {
+            Storage::disk('public')->delete($video->file);
         }
 
         $video->delete();

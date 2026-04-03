@@ -44,6 +44,7 @@
                         <th style="width:50px;">#</th>
                         <th>Name</th>
                         <th>Description</th>
+                        <th style="width:80px; text-align:center;">Categories</th>
                         <th style="width:180px;">Action</th>
                     </tr>
                 </thead>
@@ -53,6 +54,9 @@
                             <td>{{ $services->firstItem() + $index }}</td>
                             <td>{{ $service->name }}</td>
                             <td>{{ $service->description ?? '—' }}</td>
+                            <td style="text-align:center;">
+                                <span class="badge">{{ $service->categories->count() }}</span>
+                            </td>
                             <td class="action-cell">
                                 <div class="action-row">
                                     {{-- EDIT BUTTON --}}
@@ -163,6 +167,7 @@ tr:hover { background: #f3f6fb; }
 .form-status { padding:10px; border-radius:6px; margin-bottom:15px; text-align:center; }
 .alert-success { background:#d1fae5; color:#065f46; }
 .alert-error { background:#fed7d7; color:#c53030; }
+.badge { background:#1E4BA6; color:white; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
 @media(max-width:768px){ .action-cell { min-width:100%; } }
 </style>
 @endsection

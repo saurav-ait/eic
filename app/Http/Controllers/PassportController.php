@@ -23,7 +23,7 @@ class PassportController extends Controller
             'expiry_date' => 'required|date',
         ]);
 
-        Passport::create($request->all());
+        Passport::create($request->only(['passport_number', 'familyname', 'givenname', 'date_of_birth', 'issue_date', 'expiry_date']));
 
         return redirect()->route('passports.index')->with('success', 'Passport created successfully.');
     }
@@ -50,12 +50,9 @@ class PassportController extends Controller
         return view('client.passport-show', compact('passport'));
     }
 
-    public function destroy($id)
+    public function destroy(Passport $passport)
     {
-        $passport = Passport::findOrFail($id);
-
-        // Check if assigned to a job/subcategory
-        if($passport->job_subcategory_id) {
+        if ($passport->job_subcategory_id) {
             return redirect()->back()->with('error', 'Cannot delete assigned passport.');
         }
 

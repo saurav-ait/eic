@@ -7,8 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Document extends Model
 {
     protected $fillable = [
-    'passport_id',
-    'type',
-    'file'
+        'passport_id',
+        'type',
+        'file'
     ];
+
+    public function passport()
+    {
+        return $this->belongsTo(Passport::class);
+    }
 }
