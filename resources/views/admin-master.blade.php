@@ -223,6 +223,15 @@
                 @endif
 
                 @if(Auth::user()->isAdmin() || Auth::user()->isEmployee())
+
+                <li class="menu-title">CRM</li>
+                <li>
+                    <a href="{{ route('leads.index') }}" 
+                    class="{{ request()->routeIs('leads.*') ? 'active' : '' }}">
+                        📞 Leads Management
+                    </a>
+                </li>
+
                 <li class="menu-title">Operations</li>
 
                 <li>

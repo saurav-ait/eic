@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('leads', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->foreignId('service_id')->nullable();
+            $table->string('source')->default('Facebook')->change();
+            $table->text('note')->nullable();
+            $table->enum('status', ['new', 'contacted', 'converted', 'rejected'])->default('new');
             $table->timestamps();
         });
     }

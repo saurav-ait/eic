@@ -15,6 +15,7 @@ use App\Http\Controllers\JobController;
 use App\Models\JobCategory;
 use App\Models\Passport;
 use App\Models\Services;
+use App\Http\Controllers\LeadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -181,6 +182,13 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::put('/jobs/status/{id}', [JobController::class, 'updateStatus'])->name('jobs.status.update');
         Route::delete('/jobs/status/{id}', [JobController::class, 'deleteStatus'])->name('jobs.status.delete');
 
+        /*
+        |---------------- LEADS MANAGEMENT ----------------|
+        */
+        Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
+        Route::post('leads', [LeadController::class, 'store'])->name('leads.store');
+        Route::put('leads/{id}', [LeadController::class, 'update'])->name('leads.update');
+        Route::delete('leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
     });
 
 });
