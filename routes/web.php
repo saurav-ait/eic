@@ -16,6 +16,7 @@ use App\Models\JobCategory;
 use App\Models\Passport;
 use App\Models\Services;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,12 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::post('leads', [LeadController::class, 'store'])->name('leads.store');
         Route::put('leads/{id}', [LeadController::class, 'update'])->name('leads.update');
         Route::delete('leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
-    });
+        
+        /*
+        |---------------- PROFILE ----------------|
+        */
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        });
 
 });

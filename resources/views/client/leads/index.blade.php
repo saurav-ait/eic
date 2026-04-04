@@ -178,7 +178,7 @@ function closeModal() {
     document.getElementById('leadModal').style.display = 'none';
 }
 
-function editLead(id, name, phone, email, source) {
+function editLead(id, name, phone, email, source, service_id) {
     openModal();
 
     document.getElementById('modalTitle').innerText = "Edit Lead";
@@ -189,7 +189,13 @@ function editLead(id, name, phone, email, source) {
     document.getElementById('phone').value = phone;
     document.getElementById('email').value = email;
     document.getElementById('source').value = source;
-    document.getElementById('service_id').value = service_id ?? '';
+    const serviceSelect = document.getElementById('service_id');
+
+    if (service_id !== null && service_id !== undefined) {
+        serviceSelect.value = String(service_id);
+    } else {
+        serviceSelect.value = '';
+    }
 }
 </script>
 

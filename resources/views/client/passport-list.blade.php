@@ -3,164 +3,279 @@
 @section('content')
 <main class="main-content">
 
-    {{-- Top Bar --}}
-    <div class="top-bar" style="justify-content: space-between; display: flex; align-items: center; flex-wrap: wrap; gap:10px;">
+    {{-- HEADER --}}
+    <div class="top-bar">
         <div class="top-bar-title">
             <h1>Passport List</h1>
             <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
+
+        <a href="{{ route('passports.create') }}" class="btn-primary">
+            + Add Passport
+        </a>
     </div>
 
-    {{-- Flash Messages --}}
+    {{-- FLASH --}}
     @if(session('success'))
-        <div class="toast-success">
-            {{ session('success') }}
-        </div>
+        <div class="toast-success">{{ session('success') }}</div>
     @endif
 
     @if(session('error'))
-        <div class="toast-error">
-            {{ session('error') }}
-        </div>
+        <div class="toast-error">{{ session('error') }}</div>
     @endif
 
-    {{-- Search --}}
-    <div style="margin-bottom: 20px; display:flex; justify-content: space-between; flex-wrap: wrap; gap:10px;">
-        <form action="{{ route('passports.index') }}" method="GET" style="display:flex; gap:10px; flex-wrap: wrap;">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by Passport No / Name" 
-                class="input-search">
-            <button type="submit" class="btn-primary">Search</button>
+    {{-- TOOLBAR --}}
+    <div class="toolbar">
+        <form method="GET" class="search-box">
+            <input type="text" name="search" value="{{ request('search') }}"
+                   placeholder="Search passport no / name">
+            <button class="btn-primary">Search</button>
         </form>
-        <a href="{{ route('passports.create') }}" class="btn-primary">Add Passport</a>
     </div>
 
-    {{-- Passport Table --}}
-    <div class="content-section">
-        <table class="table">
+    {{-- TABLE --}}
+    <div class="table-card">
+        <table>
             <thead>
                 <tr>
-                    <th>Passport Number</th>
-                    <th>Name</th>
-                    <th style="text-align:center;">Action</th>
+                    <th>#</th>
+                    <th>Passport Info</th>
+                    <th>Status</th>
+                    <th style="width:200px;">Action</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($passports as $passport)
-                    <tr>
-                        <td>{{ $passport->passport_number }}</td>
-                        <td>{{ $passport->familyname }} {{ $passport->givenname }}</td>
-                        <td style="text-align:center;">
-                            <a href="{{ route('passports.show', $passport) }}" class="btn-primary btn-sm">View</a>
+                <tr>
 
-                            {{-- Delete --}}
-                            <form action="{{ route('passports.destroy', $passport) }}" method="POST" style="display:inline;">
+                    {{-- SERIAL --}}
+                    <td>{{ $loop->iteration }}</td>
+
+                    {{-- INFO --}}
+                    <td>
+                        <strong>{{ $passport->passport_number }}</strong>
+                        <div class="muted">
+                            {{ $passport->familyname }} {{ $passport->givenname }}
+                        </div>
+                    </td>
+
+                    {{-- STATUS --}}
+                    <td>
+                        @if($passport->job_subcategory_id)
+                            <span class="badge assigned">Assigned</span>
+                        @else
+                            <span class="badge free">Available</span>
+                        @endif
+                    </td>
+
+                    {{-- ACTION --}}
+                    <td>
+                        <div class="action-row">
+
+                            <a href="{{ route('passports.show', $passport->id) }}"
+                               class="btn success btn-xs">
+                               View
+                            </a>
+
+                            <form action="{{ route('passports.destroy', $passport->id) }}"
+                                  method="POST"
+                                  onsubmit="return confirm('Delete this passport?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn-danger btn-sm"
-                                    onclick="return confirm('Are you sure you want to delete this passport?')"
-                                    @if($passport->job_subcategory_id) disabled title="Assigned passports cannot be deleted" @endif>
+
+                                <button class="btn danger btn-xs"
+                                    @if($passport->job_subcategory_id)
+                                        disabled title="Assigned passports cannot be deleted"
+                                    @endif>
                                     Delete
                                 </button>
                             </form>
-                        </td>
-                    </tr>
+
+                        </div>
+                    </td>
+
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="3" style="text-align:center;">No passports found.</td>
-                    </tr>
+                <tr>
+                    <td colspan="4" class="text-center">
+                        No passports found
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
 
-        {{-- Pagination --}}
-        <div style="margin-top:15px;">
+        {{-- PAGINATION --}}
+        <div class="pagination">
             {{ $passports->withQueryString()->links() }}
         </div>
     </div>
 
 </main>
 
-{{-- Styles --}}
+{{-- ================= STYLES ================= --}}
 <style>
-.main-content {
-    padding: 20px;
+
+/* HEADER */
+.top-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:10px;
 }
 
-/* Buttons */
+/* TOOLBAR */
+.toolbar {
+    margin-bottom:15px;
+}
+
+.search-box {
+    display:flex;
+    gap:10px;
+}
+
+.search-box input {
+    padding:8px 10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+/* TABLE CARD */
+.table-card {
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* TABLE */
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td {
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+th {
+    background:#1E4BA6;
+    color:#fff;
+    text-align:left;
+}
+
+tr:hover {
+    background:#f5f8ff;
+}
+
+/* BADGES */
+.badge {
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge.assigned {
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.badge.free {
+    background:#dcfce7;
+    color:#166534;
+}
+
+/* ACTION */
+.action-row {
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+/* BUTTONS */
+.btn {
+    border:none;
+    cursor:pointer;
+}
+
+.btn-xs {
+    padding:5px 8px;
+    font-size:12px;
+    border-radius:4px;
+}
+
+.btn.success { background:#38a169; color:#fff; }
+.btn.success:hover { background:#2f855a; }
+
+.btn.danger { background:#e53e3e; color:#fff; }
+.btn.danger:hover { background:#c53030; }
+
 .btn-primary {
-    background-color: #1E4BA6;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-size: 13px;
-}
-.btn-primary:hover { background-color: #163A7A; }
-
-.btn-primary.btn-sm { padding: 5px 10px; font-size:12px; }
-
-.btn-danger {
-    background-color: #E74C3C;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-size: 13px;
-}
-.btn-danger:hover { background-color: #C0392B; }
-
-.btn-danger.btn-sm { padding:5px 10px; font-size:12px; }
-
-/* Table */
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+    background:#1E4BA6;
+    color:#fff;
+    padding:8px 14px;
+    border-radius:6px;
 }
 
-.table th, .table td {
-    border: 1px solid #ddd;
-    padding: 10px;
+.btn-primary:hover {
+    background:#163A7A;
 }
 
-.table th {
-    background: #1E4BA6;
-    color: #fff;
-    font-weight: 600;
-    text-align: left;
+/* TEXT */
+.muted {
+    font-size:12px;
+    color:#777;
 }
 
-/* Inputs */
-.input-search {
-    padding: 8px 12px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+.text-center {
+    text-align:center;
 }
 
-/* Toasts */
+/* TOAST */
 .toast-success {
-    background: #d1fae5;
-    padding: 10px;
-    border-radius: 6px;
-    color: #065f46;
-    margin-bottom: 15px;
+    background:#d1fae5;
+    padding:10px;
+    border-radius:6px;
+    color:#065f46;
+    margin-bottom:15px;
 }
 
 .toast-error {
-    background: #fed7d7;
-    padding: 10px;
-    border-radius: 6px;
-    color: #c53030;
-    margin-bottom: 15px;
+    background:#fed7d7;
+    padding:10px;
+    border-radius:6px;
+    color:#c53030;
+    margin-bottom:15px;
 }
 
-/* Responsive */
-@media(max-width:768px){
-    .top-bar { flex-direction: column; align-items: flex-start; gap:10px; }
-    .table th, .table td { font-size: 12px; padding:6px; }
-    .btn-primary, .btn-danger { font-size:12px; padding:6px 10px; }
+/* PAGINATION */
+.pagination {
+    margin-top:15px;
 }
+
+/* RESPONSIVE */
+@media(max-width:768px){
+    .top-bar {
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    th, td {
+        font-size:12px;
+        padding:8px;
+    }
+
+    .btn-primary {
+        font-size:12px;
+        padding:6px 10px;
+    }
+}
+
 </style>
+
 @endsection

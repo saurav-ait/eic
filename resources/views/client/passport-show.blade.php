@@ -2,173 +2,282 @@
 
 @section('content')
 <main class="main-content">
-    <div class="top-bar" style="justify-content: space-between; display: flex; align-items: center; flex-wrap: wrap; gap:10px;">
+
+    {{-- TOP BAR --}}
+    <div class="top-bar">
         <div class="top-bar-title">
             <h1>Passport Details</h1>
             <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
 
-        <!-- ACTION BUTTONS -->
-        <div style="display:flex; gap:10px;">
-            <a href="{{ route('documents.create', $passport) }}" class="btn-primary">Add Document</a>
-            <a href="{{ route('videos.create', $passport) }}" class="btn-primary">Add Video</a>
+        <div class="action-buttons">
+            <a href="{{ route('documents.create', $passport) }}" class="btn-primary">+ Document</a>
+            <a href="{{ route('videos.create', $passport) }}" class="btn-primary">+ Video</a>
         </div>
     </div>
 
-    <!-- PASSPORT INFO -->
-    <div class="content-section" style="margin-top:20px;">
-        <h3>{{ $passport->full_name }}</h3>
-        <p><strong>Passport Number:</strong> {{ $passport->passport_number }}</p>
-        <p><strong>Date of Birth:</strong> {{ $passport->date_of_birth }}</p>
-        <p><strong>Place of Birth:</strong> {{ $passport->place_of_birth }}</p>
-        <p><strong>Issue Date:</strong> {{ $passport->issue_date }}</p>
-        <p><strong>Expiry Date:</strong> {{ $passport->expiry_date }}</p>
-        <p><strong>Nationality:</strong> {{ $passport->nationality }}</p>
-        <p><strong>Gender:</strong> {{ $passport->gender }}</p>
-        <p><strong>Address:</strong> {{ $passport->address }}</p>
-        <p><strong>Contact:</strong> {{ $passport->phone }}</p>
+    {{-- PASSPORT INFO --}}
+    <div class="card info-card">
+        <h2>{{ $passport->full_name }}</h2>
+
+        <div class="info-grid">
+            <div><strong>Passport No:</strong> {{ $passport->passport_number }}</div>
+            <div><strong>Date of Birth:</strong> {{ $passport->date_of_birth }}</div>
+            <div><strong>Place of Birth:</strong> {{ $passport->place_of_birth }}</div>
+            <div><strong>Issue Date:</strong> {{ $passport->issue_date }}</div>
+            <div><strong>Expiry Date:</strong> {{ $passport->expiry_date }}</div>
+            <div><strong>Nationality:</strong> {{ $passport->nationality }}</div>
+            <div><strong>Gender:</strong> {{ $passport->gender }}</div>
+            <div><strong>Phone:</strong> {{ $passport->phone }}</div>
+        </div>
+
+        <div class="full-width">
+            <strong>Address:</strong>
+            <p class="muted">{{ $passport->address }}</p>
+        </div>
     </div>
 
-    <!-- DOCUMENT LIST -->
-    <div class="content-section" style="margin-top:30px;">
-        <h3>Documents</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>File</th>
-                    <th style="text-align:center;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($passport->documents as $doc)
-                    <tr>
-                        <td>{{ $doc->type }}</td>
-                        <td>
-                            <a href="{{ asset('public/storage/'.$doc->file) }}" target="_blank">View</a>
-                        </td>
-                        <td style="text-align:center;">
-                            <a href="{{ asset('public/storage/'.$doc->file) }}" download class="btn-primary btn-sm">Download</a>
+    {{-- DOCUMENTS --}}
+    <div class="card">
+        <div class="card-header">
+            <h3>Documents</h3>
+        </div>
 
-                            <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-danger btn-sm">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td colspan="3" style="text-align:center;">No documents</td>
+                        <th>Type</th>
+                        <th>File</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @forelse($passport->documents as $doc)
+                        <tr>
+                            <td>{{ $doc->type }}</td>
+                            <td>
+                                <a href="{{ asset('public/storage/'.$doc->file) }}" target="_blank" class="link">
+                                    View File
+                                </a>
+                            </td>
+                            <td style="text-align:center;">
+                                <div class="action-row center">
+                                    <a href="{{ asset('public/storage/'.$doc->file) }}" download class="btn-primary btn-sm">
+                                        Download
+                                    </a>
+
+                                    <form action="{{ route('documents.destroy', $doc->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="empty">No documents available</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- VIDEO LIST -->
-    <div class="content-section" style="margin-top:30px;">
-        <h3>Videos</h3>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:20px;">
+    {{-- VIDEOS --}}
+    <div class="card">
+        <div class="card-header">
+            <h3>Videos</h3>
+        </div>
+
+        <div class="video-grid">
             @forelse($passport->videos as $video)
-                <div style="border:1px solid #ccc; padding:10px; border-radius:6px; background:#fff; position:relative;">
+                <div class="video-card">
+
+                    {{-- FILE VIDEO --}}
                     @if($video->file)
-                        <!-- FILE VIDEO -->
-                        <video width="100%" height="220" controls style="border-radius:6px;">
+                        <video controls>
                             <source src="{{ asset('public/storage/'.$video->file) }}" type="video/mp4">
-                            Your browser does not support HTML5 video.
                         </video>
-                        <a href="{{ asset('public/storage/'.$video->file) }}" download class="btn-primary btn-full" style="display:inline-block; margin-top:10px; width:100%; text-align:center;">
+
+                        <a href="{{ asset('public/storage/'.$video->file) }}" download class="btn-primary btn-full">
                             Download
                         </a>
+
+                    {{-- YOUTUBE --}}
                     @elseif($video->url)
-                        <!-- YOUTUBE VIDEO -->
                         @php
                             preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^\&\?\/]+)/', $video->url, $match);
                             $embed = isset($match[1]) ? 'https://www.youtube.com/embed/'.$match[1] : null;
                         @endphp
 
                         @if($embed)
-                            <iframe width="100%" height="220" src="{{ $embed }}" frameborder="0" allowfullscreen style="border-radius:6px;"></iframe>
+                            <iframe src="{{ $embed }}" allowfullscreen></iframe>
                         @else
-                            <p style="color:red; text-align:center;">Invalid YouTube link</p>
+                            <p class="error">Invalid YouTube Link</p>
                         @endif
                     @endif
 
-                    <!-- DELETE BUTTON -->
-                    <form action="{{ route('videos.destroy', $video->id) }}" method="POST" style="margin-top:5px;">
+                    {{-- DELETE --}}
+                    <form action="{{ route('videos.destroy', $video->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn-danger" style="width:100%;">Delete</button>
+                        <button class="btn-danger btn-full">Delete</button>
                     </form>
                 </div>
             @empty
-                <p style="text-align:center; grid-column:1/-1;">No videos available</p>
+                <div class="empty full">No videos available</div>
             @endforelse
         </div>
     </div>
 
 </main>
 
-{{-- Styles --}}
+{{-- ================= STYLES ================= --}}
 <style>
+
+/* LAYOUT */
 .main-content {
     padding: 20px;
 }
 
-/* Buttons */
-.btn-primary {
-    background-color: #1E4BA6;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-size: 13px;
+/* TOP BAR */
+.top-bar {
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
 }
-.btn-primary:hover { background-color: #163A7A; }
 
-.btn-primary.btn-sm { padding: 5px 10px; font-size:12px; }
-
-.btn-primary.btn-full { padding: 8px 0; }
-
-.btn-danger {
-    background-color: #E74C3C;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-size: 13px;
+/* CARDS */
+.card {
+    background:#fff;
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:25px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
 }
-.btn-danger:hover { background-color: #C0392B; }
 
-.btn-danger.btn-sm { padding:5px 10px; font-size:12px; }
+.card-header {
+    margin-bottom:15px;
+}
 
-/* Table */
+/* INFO */
+.info-card h2 {
+    margin-bottom:15px;
+    color:#1E4BA6;
+}
+
+.info-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.full-width {
+    margin-top:10px;
+}
+
+/* TABLE */
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+    width:100%;
+    border-collapse:collapse;
 }
 
 .table th, .table td {
-    border: 1px solid #ddd;
-    padding: 10px;
+    padding:10px;
+    border-bottom:1px solid #eee;
 }
 
 .table th {
-    background: #1E4BA6;
-    color: #fff;
-    font-weight: 600;
-    text-align: left;
+    background:#1E4BA6;
+    color:#fff;
 }
 
-/* Responsive */
-@media(max-width:768px){
-    .top-bar { flex-direction: column; align-items: flex-start; gap:10px; }
-    .table th, .table td { font-size: 12px; padding:6px; }
-    .btn-primary, .btn-danger { font-size:12px; padding:6px 10px; }
+/* VIDEO GRID */
+.video-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap:20px;
 }
+
+.video-card {
+    background:#fff;
+    border:1px solid #eee;
+    padding:10px;
+    border-radius:8px;
+}
+
+.video-card video,
+.video-card iframe {
+    width:100%;
+    height:200px;
+    border-radius:6px;
+}
+
+/* BUTTONS */
+.btn-primary {
+    background:#1E4BA6;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:6px;
+    text-decoration:none;
+    border:none;
+    cursor:pointer;
+}
+
+.btn-primary:hover { background:#163A7A; }
+
+.btn-danger {
+    background:#e53e3e;
+    color:#fff;
+    border:none;
+    padding:8px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.btn-danger:hover { background:#c53030; }
+
+.btn-sm { font-size:12px; padding:5px 8px; }
+.btn-full { width:100%; margin-top:8px; }
+
+/* ACTION */
+.action-row {
+    display:flex;
+    gap:6px;
+}
+
+.center { justify-content:center; }
+
+/* TEXT */
+.muted { color:#777; }
+.link { color:#1E4BA6; text-decoration:none; }
+.link:hover { text-decoration:underline; }
+
+.empty {
+    text-align:center;
+    color:#777;
+    padding:15px;
+}
+
+.error {
+    color:red;
+    text-align:center;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+    .top-bar {
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+
 </style>
+
 @endsection

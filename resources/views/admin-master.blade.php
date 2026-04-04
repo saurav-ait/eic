@@ -263,7 +263,7 @@
                 @endif
 
                 <li class="menu-title">Account</li>
-                <li><a href="#">👤 Profile</a></li>
+                <li><a href="{{ route('profile.edit') }}">👤 Profile</a></li>
 
             </ul>
         </nav>
