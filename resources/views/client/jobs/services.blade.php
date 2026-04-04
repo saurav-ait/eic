@@ -31,7 +31,10 @@
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     <input type="text" name="name" placeholder="Service Name" required class="input-field">
                     <textarea name="description" placeholder="Service Description" class="input-field" rows="3"></textarea>
-                    <button class="btn-primary">Add Service</button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-primary">Add Service</button>
+                        <button type="button" class="btn-danger" onclick="closeAddForm()">Cancel</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -121,6 +124,14 @@ function openEditForm(id, name, description) {
 
 function closeEditForm() {
     document.getElementById('edit-service-form').style.display = 'none';
+}
+
+document.getElementById('add-service-btn').addEventListener('click', function() {
+    document.getElementById('add-service-form').style.display = 'block';
+});
+
+function closeAddForm() {
+    document.getElementById('add-service-form').style.display = 'none';
 }
 </script>
 

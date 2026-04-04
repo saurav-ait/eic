@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Services;
 
 class UserController extends Controller
 {
@@ -15,7 +16,9 @@ class UserController extends Controller
 
     public function services()
     {
-        return view('client.services');
+        $services = Services::latest()->get();
+
+        return view('client.services', compact('services'));
     }
 
     public function countries()
