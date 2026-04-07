@@ -42,6 +42,9 @@ Route::middleware($csrfMiddleware)->group(function () {
 
     Route::get('/', [UserController::class, 'index'])->name('home');
     Route::get('/services', [UserController::class, 'services'])->name('services');
+    Route::get('/services/{slug}', [UserController::class, 'serviceCategories'])
+    ->name('service.categories');
+    Route::get('/category/{slug}/subcategories', [UserController::class, 'categorySubcategories'])->name('category.subcategories');
     Route::get('/work-visa', [UserController::class, 'workVisa'])->name('work-visa');
     Route::get('/drivers', [UserController::class, 'drivers'])->name('drivers');
     Route::get('/countries', [UserController::class, 'countries'])->name('countries');

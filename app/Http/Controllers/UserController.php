@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Services;
+use App\Models\JobCategory;
 
 class UserController extends Controller
 {
@@ -19,6 +20,20 @@ class UserController extends Controller
         $services = Services::latest()->get();
 
         return view('client.services', compact('services'));
+    }
+
+    public function serviceCategories($slug)
+    {
+        $service = Services::with('categories')->where('slug', $slug)->firstOrFail();
+
+        return view('client.work-visa', compact('service'));
+    }
+
+    public function categorySubcategories($slug)
+    {
+        $category = JobCategory::with('subcategories')->where('slug', $slug)->firstOrFail();
+
+        return view('client.jobs.subcategories', compact('category'));
     }
 
     public function countries()
@@ -42,7 +57,8 @@ class UserController extends Controller
 
     public function workVisa()
     {
-        return view('client.work-visa');
+        $service = Services::where('name', 'Work Visa')->firstOrFail();
+        return view('client.work-visa', compact('service'));
     }
 
     public function drivers()

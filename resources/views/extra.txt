@@ -1,0 +1,297 @@
+//services blade
+@extends('client-master')
+@section('content')
+
+<section class="services">
+
+    <div class="section-header">
+        <h2>Our Services</h2>
+        <p>Explore our services, categories, and job opportunities</p>
+    </div>
+
+    <div class="service-container">
+
+        @forelse($services as $service)
+
+            <div class="service-card">
+
+                {{-- SERVICE HEADER --}}
+                <div class="service-header" onclick="toggleService({{ $service->id }})">
+                    <div>
+                        <h3>{{ $service->name }}</h3>
+                        <p>{{ $service->description }}</p>
+                    </div>
+                    <span class="arrow" id="arrow-{{ $service->id }}">▼</span>
+                </div>
+
+                {{-- CATEGORIES --}}
+                <div class="category-wrapper" id="service-{{ $service->id }}">
+
+                    @forelse($service->categories as $category)
+
+                        <div class="category-card">
+
+                            <div class="category-header"
+                                 onclick="toggleCategory({{ $category->id }})">
+
+                                <h4>{{ $category->name }}</h4>
+                                <span class="arrow" id="cat-arrow-{{ $category->id }}">▶</span>
+
+                            </div>
+
+                            {{-- SUBCATEGORIES --}}
+                            <div class="subcategory-wrapper"
+                                 id="category-{{ $category->id }}">
+
+                                @forelse($category->subcategories as $sub)
+
+                                    <div class="subcategory-item">
+                                        {{ $sub->name }}
+                                    </div>
+
+                                @empty
+                                    <div class="empty">No subcategories</div>
+                                @endforelse
+
+                            </div>
+
+                        </div>
+
+                    @empty
+                        <div class="empty">No categories available</div>
+                    @endforelse
+
+                </div>
+
+            </div>
+
+        @empty
+            <div class="empty-main">No services found</div>
+        @endforelse
+
+    </div>
+
+</section>
+
+{{-- ================= JS ================= --}}
+<script>
+function toggleService(id) {
+    const el = document.getElementById('service-' + id);
+    const arrow = document.getElementById('arrow-' + id);
+
+    el.classList.toggle('open');
+    arrow.classList.toggle('rotate');
+}
+
+function toggleCategory(id) {
+    const el = document.getElementById('category-' + id);
+    const arrow = document.getElementById('cat-arrow-' + id);
+
+    el.classList.toggle('open');
+    arrow.classList.toggle('rotate');
+}
+</script>
+
+{{-- ================= STYLES ================= --}}
+<style>
+
+/* SECTION */
+.services {
+    padding: 60px 20px;
+    background: #f7faff;
+}
+
+/* HEADER */
+.section-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.section-header h2 {
+    color: #1E4BA6;
+    font-size: 28px;
+}
+
+.section-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+/* CONTAINER */
+.service-container {
+    max-width: 900px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* SERVICE CARD */
+.service-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* HEADER */
+.service-header {
+    padding: 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.service-header h3 {
+    color: #1E4BA6;
+    margin-bottom: 5px;
+}
+
+.service-header p {
+    font-size: 13px;
+    color: #666;
+}
+
+/* CATEGORY WRAPPER */
+.category-wrapper {
+    display: none;
+    padding: 10px 20px 20px;
+}
+
+.category-wrapper.open {
+    display: block;
+}
+
+/* CATEGORY */
+.category-card {
+    margin-bottom: 10px;
+    border-left: 3px solid #1E4BA6;
+    padding-left: 10px;
+}
+
+/* CATEGORY HEADER */
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+.category-header h4 {
+    font-size: 14px;
+    color: #333;
+}
+
+/* SUBCATEGORY */
+.subcategory-wrapper {
+    display: none;
+    padding-left: 10px;
+}
+
+.subcategory-wrapper.open {
+    display: block;
+}
+
+.subcategory-item {
+    padding: 6px 0;
+    font-size: 13px;
+    color: #555;
+}
+
+/* ARROW */
+.arrow {
+    transition: 0.2s;
+}
+
+.rotate {
+    transform: rotate(90deg);
+}
+
+/* EMPTY */
+.empty, .empty-main {
+    color: #999;
+    font-size: 13px;
+    padding: 10px 0;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+    .section-header h2 {
+        font-size: 22px;
+    }
+}
+
+</style>
+
+@endsection
+
+@extends('client-master')
+@section('content')
+
+<!-- =========================================
+     WORK VISA SECTION
+========================================= -->
+    <section class="services">
+      <h2>{{ $service->name }} - Job Categories</h2>
+      <p style="text-align: center; margin-bottom: 30px;">{{$service->description}}</p>
+    
+      <div class="service-grid">
+
+        @forelse($service->categories as $category)
+          <a href="{{ route('category.subcategories', $category->id) }}" class="service-box">
+            <h3>{{ $category->name }}</h3>
+            <p>
+              {{ \Illuminate\Support\Str::limit($category->category_description, 120) ?? 'No description available' }}
+            </p>
+          </a>
+        @endforeach
+    
+        <a href="{{ route('drivers') }}" class="service-box">
+          <h3>Drivers</h3>
+          <p>Professional driver positions in Canada, UK, Australia, and Gulf countries. Commercial and private vehicle operation opportunities.</p>
+        </a>
+    
+        <div class="service-box">
+          <h3>Construction Workers</h3>
+          <p>On-site construction roles including laborers, equipment operators, and supervisory positions across international construction projects.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Machinery Operators</h3>
+          <p>Skilled positions operating heavy machinery, industrial equipment, and specialized manufacturing tools in various sectors.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Textile & Garments</h3>
+          <p>Manufacturing and quality control roles in textile and apparel industries with training and certification support provided.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Hotel Industry</h3>
+          <p>Hospitality sector positions including housekeeping, kitchen staff, front desk, and maintenance roles in premium hotels.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Cleaners</h3>
+          <p>Commercial and residential cleaning positions in offices, hospitals, hotels, and residential complexes worldwide.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Support Personnel</h3>
+          <p>General support staff, administrative assistants, and auxiliary workers across various industries and companies.</p>
+        </div>
+    
+        <div class="service-box">
+          <h3>Hospital and Clinic Support Staff</h3>
+          <p>Healthcare sector support roles including nursing assistants, orderlies, cleaning staff, and administrative support in medical facilities.</p>
+        </div>
+    
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="{{ route('services') }}" class="btn btn-primary">Back to Services</a>
+      </div>
+    </section>
+
+@endsection

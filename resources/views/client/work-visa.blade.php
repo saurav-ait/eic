@@ -5,10 +5,19 @@
      WORK VISA SECTION
 ========================================= -->
     <section class="services">
-      <h2>Work Visa - Job Categories</h2>
-      <p style="text-align: center; margin-bottom: 30px;">Explore various skilled and unskilled job opportunities abroad</p>
+      <h2>{{ $service->name }} - Job Categories</h2>
+      <p style="text-align: center; margin-bottom: 30px;">{{$service->description}}</p>
     
       <div class="service-grid">
+
+        @forelse($service->categories as $category)
+            <a href="{{ route('category.subcategories', $category->slug) }}" class="service-box">
+            <h3>{{ $category->name }}</h3>
+            <p>
+              {{ \Illuminate\Support\Str::limit($category->category_description, 120) ?? 'No description available' }}
+            </p>
+          </a>
+        @endforeach
     
         <a href="{{ route('drivers') }}" class="service-box">
           <h3>Drivers</h3>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Passport;
+use Illuminate\Support\Str;
 
 class JobSubcategory extends Model
 {
@@ -11,7 +12,9 @@ class JobSubcategory extends Model
         'name',
         'job_category_id',
         'subcategory_description',
+        'slug',
     ];
+
     public function category()
     {
         return $this->belongsTo(JobCategory::class, 'job_category_id');
@@ -20,5 +23,20 @@ class JobSubcategory extends Model
     public function passports()
     {
         return $this->hasMany(Passport::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($subcategory) {
+            $subcategory->slug = Str::slug($subcategory->name);
+        });
+
+        static::updating(function ($subcategory) {
+            if ($subcategory->isDirty('name')) {
+                $subcategory->slug = Str::slug($subcategory->name);
+            }
+        });
     }
 }

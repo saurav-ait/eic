@@ -10,7 +10,7 @@
       <div class="service-grid">
 
         @forelse($services as $service)
-          <a href="" class="service-box">
+          <a href="{{ route('service.categories', $service->slug) }}" class="service-box">
             <h3>{{ $service->name }}</h3>
             <p>
               {{ \Illuminate\Support\Str::limit($service->description, 120) ?? 'No description available' }}
