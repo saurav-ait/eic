@@ -12,13 +12,14 @@ class SetSecurityHeaders
     {
         $response = $next($request);
 
-        return $response
-            ->header('Vary', 'Cookie')
-            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', '0')
-            ->header('X-Content-Type-Options', 'nosniff')
-            ->header('X-Frame-Options', 'SAMEORIGIN')
-            ->header('X-XSS-Protection', '1; mode=block');
+        $response->headers->set('Vary', 'Cookie');
+        $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('X-XSS-Protection', '1; mode=block');
+
+        return $response;
     }
 }

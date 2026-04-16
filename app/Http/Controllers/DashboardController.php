@@ -9,6 +9,7 @@ use App\Models\JobCategory;
 use App\Models\JobSubcategory;
 use App\Models\Services;
 use App\Models\Status;
+use App\Models\Account;
 
 
 class DashboardController extends Controller
@@ -20,6 +21,12 @@ class DashboardController extends Controller
         $categoriesCount    = JobCategory::count();
         $subcategoriesCount = JobSubcategory::count();
         $passportsCount     = Passport::count();
+
+        $income = Account::whereIn('entry_type', ['Received','Receivable'])->sum('amount');
+        $expense = Account::whereIn('entry_type', [
+            'Payment','Payable','Purchase','Salary','Office costs'
+        ])->sum('amount');
+        $balance = Account::latest()->value('balance') ?? 0;
 
         $recentAssignments = Passport::with('subcategory.category')
             ->whereNotNull('job_subcategory_id')
@@ -41,6 +48,9 @@ class DashboardController extends Controller
             'categoriesCount',
             'subcategoriesCount',
             'passportsCount',
+            'income',
+            'expense',
+            'balance',
             'recentAssignments',
             'statuses',
             'unstatusedCount',

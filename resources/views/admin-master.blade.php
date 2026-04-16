@@ -185,6 +185,8 @@
             }
         }
     </style>
+
+    @yield('styles')
 </head>
 
 <body>
@@ -263,6 +265,12 @@
                 @endif
 
                 <li class="menu-title">Account</li>
+                <li>
+                    <a href="{{ route('accounts.index') }}"
+                       class="{{ request()->routeIs('accounts.*') ? 'active' : '' }}">
+                        💰 Accounts
+                    </a>
+                </li>
                 <li><a href="{{ route('profile.edit') }}">👤 Profile</a></li>
 
             </ul>

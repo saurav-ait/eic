@@ -18,6 +18,8 @@ use App\Models\Services;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ProfileController;
 
+use App\Http\Controllers\AccountController;
+
 /*
 |--------------------------------------------------------------------------
 | SHARED CSRF MIDDLEWARE STACK
@@ -94,6 +96,17 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
 
     Route::post('/logout', [UserController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
+    Route::post('accounts', [AccountController::class, 'store'])->name('accounts.store');
+    Route::put('accounts/{id}', [AccountController::class, 'update'])->name('accounts.update');
+    Route::delete('accounts/{id}', [AccountController::class, 'destroy'])->name('accounts.destroy');
+
+    Route::get('accounts/report', [AccountController::class, 'monthlyReport'])->name('accounts.report');
+    Route::get('accounts/export/excel', [AccountController::class, 'exportExcel'])->name('accounts.export.excel');
+    Route::get('accounts/export/pdf', [AccountController::class, 'exportPDF'])->name('accounts.export.pdf');
+    Route::get('accounts/ledger/{vendor}', [AccountController::class, 'ledger'])->name('accounts.ledger');
+    Route::get('accounts/vendors', [AccountController::class, 'vendorlist'])->name('accounts.vendors');
 
     /*
     |--------------------------------------------------------------------------
