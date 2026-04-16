@@ -2,7 +2,7 @@
 @section('content')
 
 <!-- =========================================
-     AHMED HASSAN - VIDEOS
+     Client - VIDEOS
 ========================================= -->
 <section class="services videos-page">
   <div class="videos-hero">
