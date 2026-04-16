@@ -11,13 +11,14 @@
       <div class="service-grid">
 
         @forelse($service->categories as $category)
-            <a href="{{ route('category.subcategories', $category->slug) }}" class="service-box">
+            <a href="{{ route('category.subcategories', [$service->slug, $category->slug]) }}" class="service-box">
             <h3>{{ $category->name }}</h3>
             <p>
               {{ \Illuminate\Support\Str::limit($category->category_description, 120) ?? 'No description available' }}
             </p>
           </a>
-        @endforeach
+        @empty
+        @endforelse
     
         <a href="{{ route('drivers') }}" class="service-box">
           <h3>Drivers</h3>

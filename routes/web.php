@@ -42,16 +42,19 @@ Route::middleware($csrfMiddleware)->group(function () {
 
     Route::get('/', [UserController::class, 'index'])->name('home');
     Route::get('/services', [UserController::class, 'services'])->name('services');
-    Route::get('/services/{slug}', [UserController::class, 'serviceCategories'])
+    Route::get('/services/{serviceSlug}', [UserController::class, 'serviceCategories'])
     ->name('service.categories');
-    Route::get('/category/{slug}/subcategories', [UserController::class, 'categorySubcategories'])->name('category.subcategories');
+    Route::get('/services/{serviceSlug}/{categorySlug}', [UserController::class, 'categorySubcategories'])->name('category.subcategories');
+    Route::get('/services/{serviceSlug}/{categorySlug}/{subcategorySlug}', [UserController::class, 'subcategoryJobs'])
+    ->name('subcategory.jobs');
+    Route::get('/services/{serviceSlug}/{categorySlug}/{subcategorySlug}/{positionSlug?}', [UserController::class, 'servicePosition'])->name('service.position');
     Route::get('/work-visa', [UserController::class, 'workVisa'])->name('work-visa');
     Route::get('/drivers', [UserController::class, 'drivers'])->name('drivers');
     Route::get('/countries', [UserController::class, 'countries'])->name('countries');
     Route::get('/jobs', [UserController::class, 'jobs'])->name('jobs');
     Route::get('/contact', [UserController::class, 'contact'])->name('contact');
     Route::get('/assessment', [UserController::class, 'assessment'])->name('assessment');
-    Route::get('/light-vehicle-driver', [UserController::class, 'lightVehicleDriver'])->name('light-vehicle-driver');
+    Route::get('/work-type/{slug?}', [UserController::class, 'serviceworktype'])->name('service-work-type');
     Route::get('/ahmed-videos', [UserController::class, 'ahmedVideos'])->name('ahmed-videos');
 
     /*

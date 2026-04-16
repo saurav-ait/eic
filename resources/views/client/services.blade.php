@@ -16,7 +16,8 @@
               {{ \Illuminate\Support\Str::limit($service->description, 120) ?? 'No description available' }}
             </p>
           </a>
-        @endforeach
+        @empty
+        @endforelse
     
         <a href="{{ route('work-visa') }}" class="service-box">
           <h3>Work Visa Assistance</h3>

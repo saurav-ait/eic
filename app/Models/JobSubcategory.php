@@ -22,7 +22,7 @@ class JobSubcategory extends Model
 
     public function passports()
     {
-        return $this->hasMany(Passport::class);
+        return $this->hasMany(Passport::class, 'job_subcategory_id');
     }
 
     protected static function boot()
