@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AccountsExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Country;
+use App\Models\Vendor;
 
 class AccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $income = Account::whereIn('entry_type', ['Received','Receivable'])->sum('amount');
 
@@ -21,9 +23,46 @@ class AccountController extends Controller
 
         $balance = Account::latest()->value('balance') ?? 0;
 
-        $accounts = Account::orderBy('date', 'desc')->paginate(20);
+        // Build query with filters
+        $query = Account::query();
 
-        return view('client.accounts.index', compact('income','expense','balance','accounts'));
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('vendor_name', 'like', "%{$search}%")
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhere('details', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        // Vendor filter
+        if ($request->filled('vendor')) {
+            $query->where('vendor_name', $request->vendor);
+        }
+
+        // Country filter
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+
+        // Entry type filter
+        if ($request->filled('entry_type')) {
+            $query->where('entry_type', $request->entry_type);
+        }
+
+        $accounts = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
+
+        $activeCountries = Country::where('status', true)->orderBy('name')->get();
+        $activeVendors = Vendor::where('status', true)->orderBy('name')->get();
+
+        // Get unique entry types for filter dropdown
+        $entryTypes = Account::distinct()->pluck('entry_type')->filter()->sort()->values();
+
+        return view('client.accounts.index', compact(
+            'income','expense','balance','accounts','activeCountries','activeVendors','entryTypes'
+        ));
     }
 
     public function store(Request $request)
@@ -100,13 +139,32 @@ class AccountController extends Controller
 
     public function monthlyReport(Request $request)
     {
-        $month = $request->month ?? now()->format('Y-m');
+        $request->validate([
+            'month' => 'nullable|date_format:Y-m',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+            'generated_at' => 'nullable|date'
+        ]);
 
-        $accounts = Account::whereMonth('date', date('m', strtotime($month)))
-            ->whereYear('date', date('Y', strtotime($month)))
-            ->get();
+        $generatedAt = $request->generated_at ? \Illuminate\Support\Carbon::parse($request->generated_at) : now();
+        $reportLabel = '';
+        $accountsQuery = Account::query();
 
-        return view('client.accounts.report', compact('accounts','month'));
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $fromDate = $request->from_date;
+            $toDate = $request->to_date;
+            $accountsQuery->whereBetween('date', [$fromDate, $toDate]);
+            $reportLabel = date('F j, Y', strtotime($fromDate)) . ' - ' . date('F j, Y', strtotime($toDate));
+        } else {
+            $month = $request->month ?? now()->format('Y-m');
+            $accountsQuery->whereMonth('date', date('m', strtotime($month)))
+                ->whereYear('date', date('Y', strtotime($month)));
+            $reportLabel = date('F Y', strtotime($month));
+        }
+
+        $accounts = $accountsQuery->orderBy('date')->get();
+
+        return view('client.accounts.report', compact('accounts', 'reportLabel', 'generatedAt'));
     }
 
     public function exportExcel()

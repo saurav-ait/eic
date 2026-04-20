@@ -19,12 +19,11 @@
     <input type="text" name="Phone" required>
 
     <label>Preferred Country</label>
-    <select name="Country">
-      <option>Canada</option>
-      <option>UK</option>
-      <option>Australia</option>
-      <option>UAE / Gulf</option>
-      <option>Europe</option>
+    <select name="Country" required>
+        <option value="">Select Country</option>
+        @foreach(\App\Models\Country::where('status', true)->orderBy('name')->get() as $country)
+            <option value="{{ $country->name }}">{{ $country->name }}</option>
+        @endforeach
     </select>
 
     <label>Your Work Experience</label>

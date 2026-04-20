@@ -17,8 +17,10 @@ use App\Models\Passport;
 use App\Models\Services;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ProfileController;
-
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\CountryController;
+use App\Http\Controllers\VendorController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -215,6 +217,23 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         */
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        });
+
+        /*
+        |------------------CoUNTRY MANAGEMENT------------------|
+        */
+        Route::get('countries', [CountryController::class, 'index'])->name('country.index');
+        Route::post('countries', [CountryController::class, 'store'])->name('country.store');
+        Route::put('countries/{id}', [CountryController::class, 'update'])->name('country.update');
+        Route::delete('countries/{id}', [CountryController::class, 'destroy'])->name('country.destroy');
+
+        /*
+        |------------------VENDOR MANAGEMENT------------------|
+        */
+        Route::get('vendors', [VendorController::class, 'index'])->name('vendor.index');
+        Route::post('vendors', [VendorController::class, 'store'])->name('vendor.store');
+        Route::put('vendors/{id}', [VendorController::class, 'update'])->name('vendor.update');
+        Route::delete('vendors/{id}', [VendorController::class, 'destroy'])->name('vendor.destroy');
+
+    });
 
 });

@@ -227,6 +227,21 @@
                 @if(Auth::user()->isAdmin() || Auth::user()->isEmployee())
 
                 <li class="menu-title">CRM</li>
+
+                <li>
+                    <a href="{{ route('country.index') }}" 
+                    class="{{ request()->routeIs('country.*') ? 'active' : '' }}">
+                        🌍 Countries
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('vendor.index') }}" 
+                    class="{{ request()->routeIs('vendor.*') ? 'active' : '' }}">
+                        🏢 Vendors
+                    </a>
+                </li>
+
                 <li>
                     <a href="{{ route('leads.index') }}" 
                     class="{{ request()->routeIs('leads.*') ? 'active' : '' }}">

@@ -1,0 +1,357 @@
+@extends('admin-master')
+
+@section('content')
+<main class="main-content">
+
+    {{-- HEADER --}}
+    <div class="top-bar">
+        <div class="top-bar-title">
+            <h1>Country Management</h1>
+            <p>{{ now()->format('l, F j, Y') }}</p>
+        </div>
+
+        <button class="btn-primary" onclick="openModal()">+ Add Country</button>
+    </div>
+
+    {{-- ALERT --}}
+    @if(session('success'))
+        <div class="alert success">{{ session('success') }}</div>
+    @endif
+
+    {{-- STATS --}}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Countries</h3>
+            <p>{{ $totalCountries }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Today's Countries</h3>
+            <p>{{ $todayCountries }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>This Month</h3>
+            <p>{{ $monthlyCountries }}</p>
+        </div>
+    </div>
+
+    {{-- SEARCH --}}
+    <div class="toolbar">
+        <form method="GET" class="search-box">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search active or inactive countries...">
+            <button class="btn-primary">Search</button>
+        </form>
+    </div>
+
+    {{-- TABLE --}}
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Country</th>
+                    <th>Status</th>
+                    <th style="width:160px;">Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @forelse($countries as $country)
+                <tr>
+                    {{-- ✅ Correct pagination index --}}
+                    <td>{{ $countries->firstItem() + $loop->index }}</td>
+
+                    <td>
+                        <strong>{{ $country->name }}</strong>
+                        <div class="muted small">{{ $country->created_at->diffForHumans() }}</div>
+                    </td>
+
+                    <td>
+                        @if($country->status)
+                            <span class="tag">Active</span>
+                        @else
+                            <span class="tag" style="background:#f8d7da; color:#721c24;">Inactive</span>
+                        @endif
+                    </td>
+
+                    <td>
+                        <div class="action-row">
+
+                            {{-- ✅ SAFE EDIT BUTTON --}}
+                            <button class="btn success btn-xs"
+                                onclick='editCountry(
+                                    {{ $country->id }},
+                                    @json($country->name),
+                                    @json($country->details),
+                                    @json($country->status)
+                                )'>
+                                Edit
+                            </button>
+
+                            {{-- DELETE --}}
+                            <form action="{{ route('country.destroy', $country->id) }}" method="POST"
+                                  onsubmit="return confirm('Delete this country?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn danger btn-xs">Delete</button>
+                            </form>
+
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="text-center">No countries found</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            {{ $countries->withQueryString()->links() }}
+        </div>
+    </div>
+
+</main>
+
+{{-- ================= MODAL ================= --}}
+<div id="countryModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Country</h3>
+
+        <form id="countryForm" method="POST" onsubmit="return validateForm()">
+            @csrf
+            <input type="hidden" id="methodField" name="_method">
+
+            <input type="text" name="name" id="name" placeholder="Country Name" required maxlength="255">
+
+            <textarea name="details" id="details" placeholder="Country Details" required maxlength="255"></textarea>
+
+            <div class="input-field">
+                <label>
+                    <input type="checkbox" name="status" id="status" value="1">
+                    Active
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" onclick="closeModal()" class="btn danger btn-xs">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ================= JS ================= --}}
+<script>
+function openModal() {
+    document.getElementById('countryModal').style.display = 'flex';
+    document.getElementById('countryForm').action = "{{ route('country.store') }}";
+    document.getElementById('methodField').value = '';
+    document.getElementById('modalTitle').innerText = "Add Country";
+    document.getElementById('countryForm').reset();
+}
+
+function closeModal() {
+    document.getElementById('countryModal').style.display = 'none';
+}
+
+function validateForm() {
+    const name = document.getElementById('name').value.trim();
+    const details = document.getElementById('details').value.trim();
+
+    if (!name) {
+        alert('Country name is required');
+        return false;
+    }
+
+    if (!details) {
+        alert('Country details are required');
+        return false;
+    }
+
+    return true;
+}
+
+function editCountry(id, name, details, status) {
+    openModal();
+
+    document.getElementById('modalTitle').innerText = "Edit Country";
+    document.getElementById('countryForm').action = "{{ route('country.store') }}/" + id;
+    document.getElementById('methodField').value = "PUT";
+
+    document.getElementById('name').value = name;
+    document.getElementById('details').value = details;
+    document.getElementById('status').checked = status == 1;
+
+}
+</script>
+
+{{-- ================= STYLES ================= --}}
+<style>
+
+/* ALERT */
+.alert.success {
+    background:#d1fae5;
+    color:#065f46;
+    padding:10px;
+    border-radius:6px;
+    margin-bottom:15px;
+    text-align:center;
+}
+
+/* STATS */
+.stats-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.stat-card {
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+.stat-card h3 {
+    font-size:14px;
+    color:#777;
+}
+
+.stat-card p {
+    font-size:26px;
+    font-weight:bold;
+    color:#1E4BA6;
+}
+
+/* TABLE */
+.table-card {
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td {
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+th {
+    background:#1E4BA6;
+    color:#fff;
+}
+
+tr:hover {
+    background:#f5f8ff;
+}
+
+/* SOURCE BADGE */
+.source-badge {
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+/* ACTION */
+.action-row {
+    display:flex;
+    gap:5px;
+}
+
+/* BUTTONS */
+.btn-xs {
+    padding:4px 8px;
+    font-size:12px;
+    border-radius:4px;
+    border:none;
+    cursor:pointer;
+}
+
+.btn.success { background:#38a169; color:#fff; }
+.btn.danger { background:#e53e3e; color:#fff; }
+
+.btn-primary {
+    background:#1E4BA6;
+    color:#fff;
+    padding:8px 14px;
+    border-radius:6px;
+    border:none;
+    cursor:pointer;
+}
+
+/* MODAL */
+.modal {
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content {
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    width:400px;
+}
+
+.modal-content input,
+.input-field {
+    width:100%;
+    margin-bottom:10px;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+.modal-actions {
+    display:flex;
+    justify-content:space-between;
+}
+
+/* SEARCH */
+.search-box {
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.search-box input {
+    padding:8px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+/* TEXT */
+.muted {
+    color:#777;
+    font-size:12px;
+}
+
+.tag {
+    background:#e3f2fd;
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+    .modal-content { width:90%; }
+}
+
+</style>
+
+@endsection

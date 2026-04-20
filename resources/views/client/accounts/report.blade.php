@@ -6,8 +6,9 @@
     <!-- HEADER -->
     <div class="header">
         <div>
-            <h1>Monthly Accounts Report</h1>
+            <h1>Accounts Report</h1>
             <p>{{ now()->format('l, F j, Y') }}</p>
+            <p style="margin-top:8px;color:#4b5563;font-size:14px;">Report generated on: {{ $generatedAt->format('F j, Y') }}</p>
         </div>
 
         <div class="header-actions">
@@ -17,13 +18,28 @@
 
     <!-- REPORT FILTERS -->
     <div class="card" style="margin-bottom:20px;">
-        <h3 style="margin-bottom:15px;">Select Month</h3>
-        <form method="GET" action="{{ route('accounts.report') }}" style="display: flex; gap: 15px; align-items: center;">
-            <div>
-                <label for="month" style="font-weight: bold; margin-right: 10px;">Month:</label>
-                <input type="month" name="month" value="{{ $month }}" required style="padding:8px;border:1px solid #ddd;border-radius:8px;">
+        <h3 style="margin-bottom:15px;">Generate Report</h3>
+        <form method="GET" action="{{ route('accounts.report') }}" class="report-filter-form">
+            <div class="filter-block">
+                <label for="month">Month</label>
+                <input type="month" name="month" value="{{ request('month', now()->format('Y-m')) }}" style="padding:8px;border:1px solid #ddd;border-radius:8px;">
             </div>
-            <button type="submit" class="btn primary">Generate Report</button>
+            <div class="filter-block">
+                <label for="from_date">From Date</label>
+                <input type="date" name="from_date" value="{{ request('from_date') }}" style="padding:8px;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <div class="filter-block">
+                <label for="to_date">To Date</label>
+                <input type="date" name="to_date" value="{{ request('to_date') }}" style="padding:8px;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <div class="filter-block">
+                <label for="generated_at">Date to Generate</label>
+                <input type="date" name="generated_at" value="{{ request('generated_at', now()->format('Y-m-d')) }}" style="padding:8px;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;">
+                <button type="submit" class="btn primary">Generate Report</button>
+                <a href="{{ route('accounts.report') }}" class="btn secondary">Reset</a>
+            </div>
         </form>
     </div>
 
@@ -46,7 +62,7 @@
 
     <!-- ACCOUNTS TABLE -->
     <div class="card">
-        <h3 style="margin-bottom:15px;">Accounts for {{ date('F Y', strtotime($month)) }}</h3>
+        <h3 style="margin-bottom:15px;">Accounts for {{ $reportLabel }}</h3>
         <table class="modern-table">
             <thead>
                 <tr>
@@ -86,8 +102,8 @@
     </div>
     @else
     <div class="card" style="text-align:center;padding:40px;">
-        <h3>No transactions found for {{ date('F Y', strtotime($month)) }}</h3>
-        <p style="color:#666;margin-top:10px;">Select a different month or add some transactions.</p>
+        <h3>No transactions found for {{ $reportLabel }}</h3>
+        <p style="color:#666;margin-top:10px;">Select a different range or add transactions in that period.</p>
     </div>
     @endif
 
@@ -121,5 +137,15 @@ body{background:#f4f6fb;font-family:system-ui}
 .btn.primary{background:#2563eb;color:#fff}
 
 .header-actions{display:flex;gap:10px}
+
+.report-filter-form{display:flex;flex-wrap:wrap;gap:15px;align-items:flex-end}
+.report-filter-form .filter-block{display:flex;flex-direction:column;min-width:180px}
+.report-filter-form label{font-weight:600;margin-bottom:6px;color:#374151}
+.report-filter-form input{width:220px}
+
+@media (max-width: 768px) {
+    .report-filter-form{flex-direction:column;align-items:stretch}
+    .report-filter-form input{width:100%}
+}
 </style>
 @endsection
