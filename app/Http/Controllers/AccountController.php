@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Imports\AccountsImport;
 use App\Models\Account;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -51,6 +52,13 @@ class AccountController extends Controller
         if ($request->filled('entry_type')) {
             $query->where('entry_type', $request->entry_type);
         }
+
+        // Compute totals for the current filtered set
+        $income = (clone $query)->whereIn('entry_type', ['Received','Receivable'])->sum('amount');
+        $expense = (clone $query)->whereIn('entry_type', [
+            'Payment','Payable','Purchase','Salary','Office costs'
+        ])->sum('amount');
+        $balance = (clone $query)->latest('date')->value('balance') ?? 0;
 
         $accounts = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
 
@@ -170,6 +178,21 @@ class AccountController extends Controller
     public function exportExcel()
     {
         return Excel::download(new AccountsExport, 'accounts.xlsx');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'document' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            Excel::import(new AccountsImport, $request->file('document'));
+            $this->recalculateBalances();
+            return back()->with('success', 'Accounts imported successfully.');
+        } catch (\Exception $exception) {
+            return back()->with('error', 'Import failed: ' . $exception->getMessage());
+        }
     }
 
     public function exportPDF()
