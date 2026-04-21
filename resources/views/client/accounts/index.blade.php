@@ -13,8 +13,8 @@
         <div class="header-actions" style="flex-wrap: wrap; gap: 8px; align-items: center;">
             <a href="{{ route('accounts.vendors') }}" class="btn primary" style="text-decoration: none;">Vendors</a>
             <a href="{{ route('accounts.report') }}" class="btn primary" style="text-decoration: none;">Reports</a>
-            <a href="{{ route('accounts.export.excel') }}" class="btn primary" style="text-decoration: none;">Excel</a>
-            <a href="{{ route('accounts.export.pdf') }}" class="btn primary" style="text-decoration: none;">PDF</a>
+            <a href="{{ route('accounts.export.excel') . (request()->getQueryString() ? '?' . request()->getQueryString() : '') }}" class="btn primary" style="text-decoration: none;">Excel</a>
+            <a href="{{ route('accounts.export.pdf') . (request()->getQueryString() ? '?' . request()->getQueryString() : '') }}" class="btn primary" style="text-decoration: none;">PDF</a>
             <form method="POST" action="{{ route('accounts.import') }}" enctype="multipart/form-data" style="display:inline-flex; gap:8px; align-items:center; margin:0;">
                 @csrf
                 <label class="btn secondary" for="importDocument" style="margin:0;">Import Excel</label>
@@ -131,8 +131,8 @@
                     <td><span class="pill">{{ $acc->entry_type }}</span></td>
                     <td>{{ $acc->vendor_name }}</td>
                     <td>{{ $acc->vendor_type }}</td>
-                    <td class="amount">${{ number_format($acc->amount,2) }}</td>
-                    <td class="amount">${{ number_format($acc->balance,2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->amount,2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->balance,2) }}</td>
                     <td>
                         <span class="status-badge {{ strtolower($acc->last_status ?? 'pending') }}">
                             {{ $acc->last_status ?? 'Pending' }}
@@ -190,11 +190,11 @@
             <div class="detail-section">
                 <div class="detail-item">
                     <label>Amount</label>
-                    <span id="viewAmount" class="amount">$0.00</span>
+                    <span id="viewAmount" class="amount">৳0.00</span>
                 </div>
                 <div class="detail-item">
                     <label>Balance</label>
-                    <span id="viewBalance" class="amount">$0.00</span>
+                    <span id="viewBalance" class="amount">৳0.00</span>
                 </div>
                 <div class="detail-item">
                     <label>Status</label>
@@ -408,8 +408,8 @@ function viewEntry(data) {
     document.getElementById('viewEntryType').textContent = data.entry_type || '-';
     document.getElementById('viewVendorType').textContent = data.vendor_type || '-';
     document.getElementById('viewVendorName').textContent = data.vendor_name || '-';
-    document.getElementById('viewAmount').textContent = '$' + parseFloat(data.amount || 0).toFixed(2);
-    document.getElementById('viewBalance').textContent = '$' + parseFloat(data.balance || 0).toFixed(2);
+    document.getElementById('viewAmount').textContent = '৳' + parseFloat(data.amount || 0).toFixed(2);
+    document.getElementById('viewBalance').textContent = '৳' + parseFloat(data.balance || 0).toFixed(2);
     document.getElementById('viewCountry').textContent = data.country || '-';
     document.getElementById('viewPurpose').textContent = data.purpose || '-';
     document.getElementById('viewDetails').textContent = data.details || '-';

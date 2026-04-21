@@ -38,7 +38,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $vendor }}</td>
                     <td><span class="pill">{{ $transactionCount }}</span></td>
-                    <td class="amount">${{ number_format($totalAmount, 2) }}</td>
+                    <td class="amount">৳{{ number_format($totalAmount, 2) }}</td>
                     <td>
                         <a href="{{ route('accounts.ledger', ['vendor' => $vendor]) }}" class="btn primary" style="text-decoration: none; padding: 6px 12px; font-size: 12px;">View Ledger</a>
                     </td>

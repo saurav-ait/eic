@@ -106,15 +106,15 @@
         <h3>Summary</h3>
         <div class="summary-row">
             <span class="summary-label">Total Income:</span>
-            <span class="summary-value income">${{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount'), 2) }}</span>
+            <span class="summary-value income">৳{{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount'), 2) }}</span>
         </div>
         <div class="summary-row">
             <span class="summary-label">Total Expenses:</span>
-            <span class="summary-value expense">${{ number_format($accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</span>
+            <span class="summary-value expense">৳{{ number_format($accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</span>
         </div>
         <div class="summary-row">
             <span class="summary-label">Current Balance:</span>
-            <span class="summary-value">${{ number_format($accounts->last()->balance ?? 0, 2) }}</span>
+            <span class="summary-value">৳{{ number_format($accounts->last()->balance ?? 0, 2) }}</span>
         </div>
     </div>
 </body>

@@ -108,6 +108,7 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
     Route::get('accounts/export/excel', [AccountController::class, 'exportExcel'])->name('accounts.export.excel');
     Route::post('accounts/import', [AccountController::class, 'importExcel'])->name('accounts.import');
     Route::get('accounts/export/pdf', [AccountController::class, 'exportPDF'])->name('accounts.export.pdf');
+    Route::get('accounts/ledger/{vendor}/pdf', [AccountController::class, 'exportLedgerPDF'])->name('accounts.ledger.pdf');
     Route::get('accounts/ledger/{vendor}', [AccountController::class, 'ledger'])->name('accounts.ledger');
     Route::get('accounts/vendors', [AccountController::class, 'vendorlist'])->name('accounts.vendors');
 

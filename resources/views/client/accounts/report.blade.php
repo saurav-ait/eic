@@ -48,15 +48,15 @@
     <div class="stats">
         <div class="stat-card income">
             <span>Total Income</span>
-            <h2>${{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount'), 2) }}</h2>
+            <h2>৳{{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount'), 2) }}</h2>
         </div>
         <div class="stat-card expense">
             <span>Total Expenses</span>
-            <h2>${{ number_format($accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</h2>
+            <h2>৳{{ number_format($accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</h2>
         </div>
         <div class="stat-card balance">
             <span>Net Balance</span>
-            <h2>${{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount') - $accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</h2>
+            <h2>৳{{ number_format($accounts->whereIn('entry_type', ['Received','Receivable'])->sum('amount') - $accounts->whereIn('entry_type', ['Payment','Payable','Purchase','Salary','Office costs'])->sum('amount'), 2) }}</h2>
         </div>
     </div>
 
@@ -86,7 +86,7 @@
                     <td>{{ $acc->vendor_name }}</td>
                     <td>{{ $acc->purpose }}</td>
                     <td>{{ $acc->country }}</td>
-                    <td class="amount">${{ number_format($acc->amount, 2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->amount, 2) }}</td>
                     <td>
                         @if($acc->document)
                             <a href="{{ asset('storage/'.$acc->document) }}" target="_blank" class="btn primary" style="text-decoration:none;padding:4px 8px;font-size:12px;">View</a>

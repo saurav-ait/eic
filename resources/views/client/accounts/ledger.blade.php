@@ -10,7 +10,9 @@
             <p>{{ now()->format('l, F j, Y') }}</p>
         </div>
 
-        <div class="header-actions">
+        <div class="header-actions no-print">
+            <button onclick="window.print()" class="btn primary">Print Ledger</button>
+            <a href="{{ route('accounts.ledger.pdf', $vendor) }}" class="btn primary" style="text-decoration: none;">Download PDF</a>
             <a href="{{ route('accounts.vendors') }}" class="btn primary" style="text-decoration: none;">← Back to Vendors</a>
         </div>
     </div>
@@ -48,7 +50,7 @@
                     <td>{{ substr($acc->details, 0, 30) ?? '-' }}{{ strlen($acc->details ?? '') > 30 ? '...' : '' }}</td>
                     <td class="amount">
                         @if(in_array($acc->entry_type, ['Received','Receivable']))
-                            ${{ number_format($acc->amount, 2) }}
+                            ৳{{ number_format($acc->amount, 2) }}
                             @php $runningBalance += $acc->amount; @endphp
                         @else
                             -
@@ -56,13 +58,13 @@
                     </td>
                     <td class="amount">
                         @if(in_array($acc->entry_type, ['Payment','Payable','Purchase','Salary','Office costs']))
-                            ${{ number_format($acc->amount, 2) }}
+                            ৳{{ number_format($acc->amount, 2) }}
                             @php $runningBalance -= $acc->amount; @endphp
                         @else
                             -
                         @endif
                     </td>
-                    <td class="amount">${{ number_format($runningBalance, 2) }}</td>
+                    <td class="amount">৳{{ number_format($runningBalance, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -91,5 +93,47 @@ body{background:#f4f6fb;font-family:system-ui}
 .btn.primary{background:#2563eb;color:#fff}
 
 .header-actions{display:flex;gap:10px}
+
+/* Print Styles */
+@media print {
+    /* Hide unnecessary UI elements */
+    .no-print, 
+    .sidebar, 
+    .top-bar, 
+    .header-actions,
+    nav, 
+    footer {
+        display: none !important;
+    }
+
+    /* Reset layout for paper */
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    .main-content, .card {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+    }
+
+    .modern-table {
+        border: 1px solid #000;
+    }
+
+    .modern-table th {
+        background-color: #f3f4f6 !important;
+        color: #000 !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    
+    .modern-table td {
+        border-bottom: 1px solid #eee !important;
+    }
+}
 </style>
 @endsection

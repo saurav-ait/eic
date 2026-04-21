@@ -108,17 +108,17 @@ th { background:#f5f5f5; font-weight:600; }
         <a href="{{ route('accounts.index') }}" class="card tile income-tile" style="text-decoration: none;">
             <div class="tile-icon">💰</div>
             <h3>Total Income</h3>
-            <p class="stat">${{ number_format($income, 2) }}</p>
+            <p class="stat">৳{{ number_format($income, 2) }}</p>
         </a>
         <a href="{{ route('accounts.index') }}" class="card tile expense-tile" style="text-decoration: none;">
             <div class="tile-icon">💸</div>
             <h3>Total Expenses</h3>
-            <p class="stat">${{ number_format($expense, 2) }}</p>
+            <p class="stat">৳{{ number_format($expense, 2) }}</p>
         </a>
         <a href="{{ route('accounts.index') }}" class="card tile balance-tile" style="text-decoration: none;">
             <div class="tile-icon">⚖️</div>
             <h3>Current Balance</h3>
-            <p class="stat">${{ number_format($balance, 2) }}</p>
+            <p class="stat">৳{{ number_format($balance, 2) }}</p>
         </a>
     </div>
 

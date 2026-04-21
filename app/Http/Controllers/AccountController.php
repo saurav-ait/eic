@@ -7,6 +7,9 @@ use App\Imports\AccountsImport;
 use App\Models\Account;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 use App\Exports\AccountsExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Country;
@@ -175,9 +178,84 @@ class AccountController extends Controller
         return view('client.accounts.report', compact('accounts', 'reportLabel', 'generatedAt'));
     }
 
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
-        return Excel::download(new AccountsExport, 'accounts.xlsx');
+        $query = Account::query();
+
+        // Apply same filters as index
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('vendor_name', 'like', "%{$search}%")
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhere('details', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('vendor')) {
+            $query->where('vendor_name', $request->vendor);
+        }
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+
+        if ($request->filled('entry_type')) {
+            $query->where('entry_type', $request->entry_type);
+        }
+
+        $accounts = $query->orderBy('date', 'desc')->get();
+
+        // Create a temporary export class or modify AccountsExport
+        // For simplicity, create inline
+        $export = new class($accounts) implements FromCollection, WithHeadings, WithMapping {
+            private $accounts;
+
+            public function __construct($accounts)
+            {
+                $this->accounts = $accounts;
+            }
+
+            public function collection()
+            {
+                return $this->accounts;
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'Date',
+                    'Entry Type',
+                    'Vendor Type',
+                    'Vendor Name',
+                    'Purpose',
+                    'Details',
+                    'Country',
+                    'Last Status',
+                    'Amount',
+                    'Balance',
+                ];
+            }
+
+            public function map($account): array
+            {
+                return [
+                    $account->date,
+                    $account->entry_type,
+                    $account->vendor_type,
+                    $account->vendor_name,
+                    $account->purpose,
+                    $account->details,
+                    $account->country,
+                    $account->last_status,
+                    number_format($account->amount, 2),
+                    number_format($account->balance, 2),
+                ];
+            }
+        };
+
+        return Excel::download($export, 'accounts.xlsx');
     }
 
     public function importExcel(Request $request)
@@ -195,9 +273,34 @@ class AccountController extends Controller
         }
     }
 
-    public function exportPDF()
+    public function exportPDF(Request $request)
     {
-        $accounts = Account::all();
+        $query = Account::query();
+
+        // Apply same filters as index
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('vendor_name', 'like', "%{$search}%")
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhere('details', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('vendor')) {
+            $query->where('vendor_name', $request->vendor);
+        }
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+
+        if ($request->filled('entry_type')) {
+            $query->where('entry_type', $request->entry_type);
+        }
+
+        $accounts = $query->orderBy('date', 'desc')->get();
 
         $pdf = PDF::loadView('admin.accounts.pdf', compact('accounts'));
 
@@ -210,10 +313,26 @@ class AccountController extends Controller
                 $q->where('vendor_name', $vendor);
             })
             ->orderBy('date')
+            ->orderBy('id')
             ->get();
 
         return view('client.accounts.ledger', compact('accounts','vendor'));
     }
+
+    public function exportLedgerPDF($vendor)
+    {
+        $accounts = Account::where('vendor_name', $vendor)
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        // Re-using your existing PDF view logic
+        // Ensure the view 'admin.accounts.pdf' is prepared to handle $vendor variable if needed
+        $pdf = Pdf::loadView('admin.accounts.pdf', compact('accounts', 'vendor'));
+
+        return $pdf->download("ledger_{$vendor}.pdf");
+    }
+
     public function vendorlist()
     {
         $vendors = Account::select('vendor_name')->distinct()->pluck('vendor_name');

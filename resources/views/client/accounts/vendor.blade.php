@@ -40,8 +40,8 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $acc->date }}</td>
                     <td><span class="pill">{{ $acc->entry_type }}</span></td>
-                    <td class="amount">${{ number_format($acc->amount, 2) }}</td>
-                    <td class="amount">${{ number_format($acc->running_balance ?? 0, 2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->amount, 2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->running_balance ?? 0, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
