@@ -204,33 +204,13 @@ class AccountController extends Controller
         return $pdf->download('accounts.pdf');
     }
 
-    public function ledger(Request $request)
+    public function ledger($vendor)
     {
-        $vendor = $request->vendor_name;
-
         $accounts = Account::when($vendor, function ($q) use ($vendor) {
                 $q->where('vendor_name', $vendor);
             })
             ->orderBy('date')
             ->get();
-
-        $runningBalance = 0;
-
-        $accounts->map(function ($item) use (&$runningBalance) {
-
-            $incomeTypes = ['Received','Receivable'];
-            $expenseTypes = ['Payment','Payable','Purchase','Salary','Office costs'];
-
-            if (in_array($item->entry_type, $incomeTypes)) {
-                $runningBalance += $item->amount;
-            } else {
-                $runningBalance -= $item->amount;
-            }
-
-            $item->running_balance = $runningBalance;
-
-            return $item;
-        });
 
         return view('client.accounts.ledger', compact('accounts','vendor'));
     }
