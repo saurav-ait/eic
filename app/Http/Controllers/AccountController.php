@@ -316,6 +316,20 @@ class AccountController extends Controller
             ->orderBy('id')
             ->get();
 
+        // Calculate running balance for this vendor's ledger
+        $runningBalance = 0;
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        foreach ($accounts as $account) {
+            if (in_array($account->entry_type, $incomeTypes)) {
+                $runningBalance += $account->amount;
+            } elseif (in_array($account->entry_type, $expenseTypes)) {
+                $runningBalance -= $account->amount;
+            }
+            $account->running_balance = $runningBalance;
+        }
+
         return view('client.accounts.ledger', compact('accounts','vendor'));
     }
 
@@ -335,7 +349,11 @@ class AccountController extends Controller
 
     public function vendorlist()
     {
-        $vendors = Account::select('vendor_name')->distinct()->pluck('vendor_name');
+        $vendors = Account::select('vendor_name')
+            ->whereNotNull('vendor_name')
+            ->where('vendor_name', '!=', '')
+            ->distinct()
+            ->pluck('vendor_name');
 
         return view('client.accounts.vendors', compact('vendors'));
     }
@@ -352,7 +370,7 @@ class AccountController extends Controller
         foreach ($accounts as $account) {
             if (in_array($account->entry_type, $incomeTypes)) {
                 $runningBalance += $account->amount;
-            } else {
+            } elseif (in_array($account->entry_type, $expenseTypes)) {
                 $runningBalance -= $account->amount;
             }
 

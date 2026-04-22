@@ -317,6 +317,7 @@
 function toggleMenu(id){
     document.getElementById(id).classList.toggle('open');
 }
+@yield('scripts')
 </script>
 
 </body>

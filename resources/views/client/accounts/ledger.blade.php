@@ -11,7 +11,7 @@
         </div>
 
         <div class="header-actions no-print">
-            <button onclick="window.print()" class="btn primary">Print Ledger</button>
+            <button onclick="window.print()" class="btn primary" type="button">Print Ledger</button>
             <a href="{{ route('accounts.ledger.pdf', $vendor) }}" class="btn primary" style="text-decoration: none;">Download PDF</a>
             <a href="{{ route('accounts.vendors') }}" class="btn primary" style="text-decoration: none;">← Back to Vendors</a>
         </div>
@@ -19,10 +19,17 @@
 
     @if($vendor)
     <!-- VENDOR INFO -->
-    <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;">
+    <div class="card vendor-info-card" style="margin-bottom:20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;">
         <h3 style="margin:0;">Vendor: {{ $vendor }}</h3>
     </div>
     @endif
+
+    <!-- PRINT HEADER (hidden in normal view, shown in print) -->
+    <div class="print-header" style="display:none;">
+        <h1 style="text-align:center; margin-bottom: 5px;">Vendor Ledger Report</h1>
+        <h2 style="text-align:center; margin-top: 0; margin-bottom: 15px;">Vendor: {{ $vendor }}</h2>
+        <p style="text-align:right; font-size: 12px; margin-bottom: 20px;">Generated on: {{ now()->format('F j, Y, h:i A') }}</p>
+    </div>
 
     <!-- LEDGER TABLE -->
     <div class="card">
@@ -40,7 +47,6 @@
                 </tr>
             </thead>
             <tbody>
-                @php $runningBalance = 0; @endphp
                 @foreach($accounts as $acc)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
@@ -51,7 +57,6 @@
                     <td class="amount">
                         @if(in_array($acc->entry_type, ['Received','Receivable']))
                             ৳{{ number_format($acc->amount, 2) }}
-                            @php $runningBalance += $acc->amount; @endphp
                         @else
                             -
                         @endif
@@ -59,15 +64,20 @@
                     <td class="amount">
                         @if(in_array($acc->entry_type, ['Payment','Payable','Purchase','Salary','Office costs']))
                             ৳{{ number_format($acc->amount, 2) }}
-                            @php $runningBalance -= $acc->amount; @endphp
                         @else
                             -
                         @endif
                     </td>
-                    <td class="amount">৳{{ number_format($runningBalance, 2) }}</td>
+                    <td class="amount">৳{{ number_format($acc->running_balance, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="7" style="text-align:right;">Final Balance for {{ $vendor }}:</th>
+                    <th class="amount">৳{{ number_format($accounts->last()?->running_balance ?? 0, 2) }}</th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
@@ -76,64 +86,236 @@
 
 @section('styles')
 <style>
-body{background:#f4f6fb;font-family:system-ui}
+body{
+    background:#f1f5f9;
+    font-family:'Inter', system-ui, -apple-system;
+    color:#1e293b;
+}
 
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+/* HEADER */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+.header h1{
+    font-size:24px;
+    font-weight:600;
+}
+.header p{
+    font-size:13px;
+    color:#64748b;
+}
 
-.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+/* ACTION BUTTONS */
+.header-actions{
+    display:flex;
+    gap:10px;
+}
+.btn{
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:500;
+    transition:.2s;
+}
+.btn.primary{
+    background:#2563eb;
+    color:#fff;
+}
+.btn.primary:hover{
+    background:#1d4ed8;
+}
 
-.modern-table{width:100%;border-collapse:collapse}
-.modern-table th{background:#2563eb;color:#fff}
-.modern-table th,.modern-table td{padding:12px;border-bottom:1px solid #eee}
+/* CARD */
+.card{
+    background:#fff;
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.04);
+}
 
-.pill{background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:20px;font-size:12px}
-.amount{font-weight:600}
+/* VENDOR INFO */
+.vendor-info-card{
+    border-radius:16px;
+    padding:20px;
+    font-size:16px;
+    font-weight:500;
+    letter-spacing:.3px;
+}
 
-.btn{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500}
-.btn.primary{background:#2563eb;color:#fff}
+/* TABLE */
+.modern-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+}
 
-.header-actions{display:flex;gap:10px}
+.modern-table thead th{
+    background:#2563eb;
+    color:#fff;
+    font-weight:500;
+    text-align:left;
+}
 
-/* Print Styles */
+.modern-table th,
+.modern-table td{
+    padding:14px 12px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.modern-table tbody tr{
+    transition:.2s;
+}
+.modern-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+/* ALIGNMENT */
+.modern-table td:nth-child(6),
+.modern-table td:nth-child(7),
+.modern-table td:nth-child(8){
+    text-align:right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* FOOTER */
+.modern-table tfoot th{
+    background:#f1f5f9;
+    font-weight:600;
+    border-top:2px solid #cbd5e1;
+}
+
+/* BADGE */
+.pill{
+    background:#e0f2fe;
+    color:#0369a1;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:500;
+}
+
+/* AMOUNT */
+.amount{
+    font-weight:600;
+}
+
+/* PRINT STYLES */
 @media print {
-    /* Hide unnecessary UI elements */
-    .no-print, 
-    .sidebar, 
-    .top-bar, 
+
+    .no-print,
+    .sidebar,
+    .header,
     .header-actions,
-    nav, 
+    .vendor-info-card,
+    nav,
     footer {
-        display: none !important;
+        display:none !important;
     }
 
-    /* Reset layout for paper */
-    body {
-        background: #fff !important;
-        color: #000 !important;
-        margin: 0;
-        padding: 0;
+    body{
+        background:#fff !important;
+        color:#000 !important;
+        font-size:11px;
+        margin:0;
+        padding:0;
     }
 
-    .main-content, .card {
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        width: 100% !important;
+    .print-header{
+        display:block !important;
+        text-align:center;
+        margin-bottom:20px;
+        page-break-after:avoid;
     }
 
-    .modern-table {
-        border: 1px solid #000;
+    .print-header h1{
+        font-size:18px;
+        margin:0 0 5px 0;
+        font-weight:bold;
     }
 
-    .modern-table th {
-        background-color: #f3f4f6 !important;
-        color: #000 !important;
-        border-bottom: 2px solid #000 !important;
+    .print-header h2{
+        font-size:14px;
+        margin:0 0 10px 0;
+        font-weight:normal;
     }
-    
-    .modern-table td {
-        border-bottom: 1px solid #eee !important;
+
+    .print-header p{
+        font-size:10px;
+        margin:0;
+        text-align:right;
+    }
+
+    .main-content,
+    .card{
+        margin:0 !important;
+        padding:0 !important;
+        box-shadow:none !important;
+        background:#fff !important;
+    }
+
+    .modern-table{
+        border-collapse:collapse;
+        border:1px solid #000;
+        width:100%;
+        margin:0;
+    }
+
+    .modern-table th,
+    .modern-table td{
+        border:1px solid #666;
+        padding:4px 6px;
+        font-size:9px;
+        text-align:left;
+    }
+
+    .modern-table th{
+        background:#f0f0f0 !important;
+        color:#000 !important;
+        font-weight:bold;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+
+    .modern-table tfoot th{
+        background:#e0e0e0 !important;
+        border-top:2px solid #000 !important;
+        font-weight:bold;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+
+    .pill{
+        background:none !important;
+        color:#000 !important;
+        padding:0;
+        font-weight:normal;
+    }
+
+    .amount{
+        text-align:right;
+        font-weight:bold;
+    }
+
+    .modern-table td:nth-child(6),
+    .modern-table td:nth-child(7),
+    .modern-table td:nth-child(8){
+        text-align:right;
+    }
+
+    @page {
+        margin: 0.5in;
+        size: A4;
     }
 }
 </style>
+@endsection
+
+@section('scripts')
+<script>
+// Print functionality is handled directly in the button onclick
+</script>
 @endsection
