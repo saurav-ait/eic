@@ -12,7 +12,7 @@
 
         <div class="header-actions no-print">
             <button onclick="window.print()" class="btn primary" type="button">Print Ledger</button>
-            <a href="{{ route('accounts.ledger.pdf', $vendor) }}" class="btn primary" style="text-decoration: none;">Download PDF</a>
+            <a href="{{ route('accounts.ledger.pdf', $vendor) }}?from_date={{ request('from_date') }}&to_date={{ request('to_date') }}" class="btn primary" style="text-decoration: none;">Download PDF</a>
             <a href="{{ route('accounts.vendors') }}" class="btn primary" style="text-decoration: none;">← Back to Vendors</a>
         </div>
     </div>
@@ -23,6 +23,29 @@
         <h3 style="margin:0;">Vendor: {{ $vendor }}</h3>
     </div>
     @endif
+
+    <!-- ✅ DATE FILTER -->
+    <div class="card no-print" style="margin-bottom:20px;">
+        <form method="GET">
+            <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+                <div>
+                    <label>From Date</label>
+                    <input type="date" name="from_date" value="{{ request('from_date') }}" class="input">
+                </div>
+
+                <div>
+                    <label>To Date</label>
+                    <input type="date" name="to_date" value="{{ request('to_date') }}" class="input">
+                </div>
+
+                <button type="submit" class="btn primary">Filter</button>
+
+                <a href="{{ route('accounts.ledger', $vendor) }}" class="btn">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
 
     <!-- PRINT HEADER (hidden in normal view, shown in print) -->
     <div class="print-header" style="display:none;">
@@ -47,6 +70,14 @@
                 </tr>
             </thead>
             <tbody>
+                @if(request('from_date'))
+                <tr style="background:#f1f5f9; font-weight:600;">
+                    <td colspan="7" style="text-align:right;">
+                        Opening Balance (before {{ request('from_date') }}):
+                    </td>
+                    <td class="amount">৳{{ number_format($openingBalance, 2) }}</td>
+                </tr>
+                @endif
                 @foreach($accounts as $acc)
                 <tr>
                     <td>{{ $loop->iteration }}</td>

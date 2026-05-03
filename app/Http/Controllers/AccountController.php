@@ -273,18 +273,55 @@ class AccountController extends Controller
         }
     }
 
+    // public function exportPDF(Request $request)
+    // {
+    //     $query = Account::query();
+
+    //     // Apply same filters as index
+    //     if ($request->filled('search')) {
+    //         $search = $request->search;
+    //         $query->where(function($q) use ($search) {
+    //             $q->where('vendor_name', 'like', "%{$search}%")
+    //               ->orWhere('purpose', 'like', "%{$search}%")
+    //               ->orWhere('details', 'like', "%{$search}%")
+    //               ->orWhere('country', 'like', "%{$search}%");
+    //         });
+    //     }
+
+    //     if ($request->filled('vendor')) {
+    //         $query->where('vendor_name', $request->vendor);
+    //     }
+
+    //     if ($request->filled('country')) {
+    //         $query->where('country', $request->country);
+    //     }
+
+    //     if ($request->filled('entry_type')) {
+    //         $query->where('entry_type', $request->entry_type);
+    //     }
+
+    //     $accounts = $query->orderBy('date', 'desc')->get();
+
+    //     $pdf = PDF::loadView('admin.accounts.pdf', compact('accounts'));
+
+    //     return $pdf->download('accounts.pdf');
+    // }
+
     public function exportPDF(Request $request)
     {
         $query = Account::query();
 
-        // Apply same filters as index
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        // FILTERS
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('vendor_name', 'like', "%{$search}%")
-                  ->orWhere('purpose', 'like', "%{$search}%")
-                  ->orWhere('details', 'like', "%{$search}%")
-                  ->orWhere('country', 'like', "%{$search}%");
+                ->orWhere('purpose', 'like', "%{$search}%")
+                ->orWhere('details', 'like', "%{$search}%")
+                ->orWhere('country', 'like', "%{$search}%");
             });
         }
 
@@ -300,9 +337,42 @@ class AccountController extends Controller
             $query->where('entry_type', $request->entry_type);
         }
 
-        $accounts = $query->orderBy('date', 'desc')->get();
+        // ✅ DATE RANGE (IMPORTANT FOR OPENING BALANCE)
+        $fromDate = $request->from_date;
+        $toDate   = $request->to_date;
 
-        $pdf = PDF::loadView('admin.accounts.pdf', compact('accounts'));
+        // ✅ OPENING BALANCE (BEFORE RANGE)
+        $openingBalance = 0;
+
+        if ($fromDate) {
+            $openingBalance = Account::when($request->vendor, fn($q) => $q->where('vendor_name', $request->vendor))
+                ->whereDate('date', '<', $fromDate)
+                ->orderBy('date')
+                ->orderBy('id')
+                ->get()
+                ->reduce(function ($carry, $item) use ($incomeTypes, $expenseTypes) {
+                    if (in_array($item->entry_type, $incomeTypes)) {
+                        return $carry + $item->amount;
+                    }
+                    if (in_array($item->entry_type, $expenseTypes)) {
+                        return $carry - $item->amount;
+                    }
+                    return $carry;
+                }, 0);
+        }
+
+        // ✅ FILTERED DATA
+        $accounts = $query
+            ->when($fromDate, fn($q) => $q->whereDate('date', '>=', $fromDate))
+            ->when($toDate, fn($q) => $q->whereDate('date', '<=', $toDate))
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        $pdf = PDF::loadView('admin.accounts.pdf', compact(
+            'accounts',
+            'openingBalance'
+        ));
 
         return $pdf->download('accounts.pdf');
     }
@@ -333,16 +403,56 @@ class AccountController extends Controller
         return view('client.accounts.ledger', compact('accounts','vendor'));
     }
 
+    // public function exportLedgerPDF($vendor)
+    // {
+    //     $accounts = Account::where('vendor_name', $vendor)
+    //         ->orderBy('date')
+    //         ->orderBy('id')
+    //         ->get();
+
+    //     // Re-using your existing PDF view logic
+    //     // Ensure the view 'admin.accounts.pdf' is prepared to handle $vendor variable if needed
+    //     $pdf = Pdf::loadView('admin.accounts.pdf', compact('accounts', 'vendor'));
+
+    //     return $pdf->download("ledger_{$vendor}.pdf");
+    // }
+
     public function exportLedgerPDF($vendor)
     {
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        // OPTIONAL: if you later add date filter
+        $fromDate = request('from_date');
+
+        // ✅ OPENING BALANCE
+        $openingBalance = Account::where('vendor_name', $vendor)
+            ->when($fromDate, fn($q) => $q->whereDate('date', '<', $fromDate))
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get()
+            ->reduce(function ($carry, $item) use ($incomeTypes, $expenseTypes) {
+                if (in_array($item->entry_type, $incomeTypes)) {
+                    return $carry + $item->amount;
+                }
+                if (in_array($item->entry_type, $expenseTypes)) {
+                    return $carry - $item->amount;
+                }
+                return $carry;
+            }, 0);
+
+        // ✅ CURRENT DATA
         $accounts = Account::where('vendor_name', $vendor)
+            ->when($fromDate, fn($q) => $q->whereDate('date', '>=', $fromDate))
             ->orderBy('date')
             ->orderBy('id')
             ->get();
 
-        // Re-using your existing PDF view logic
-        // Ensure the view 'admin.accounts.pdf' is prepared to handle $vendor variable if needed
-        $pdf = Pdf::loadView('admin.accounts.pdf', compact('accounts', 'vendor'));
+        $pdf = Pdf::loadView('admin.accounts.pdf', compact(
+            'accounts',
+            'vendor',
+            'openingBalance'
+        ));
 
         return $pdf->download("ledger_{$vendor}.pdf");
     }
@@ -357,6 +467,21 @@ class AccountController extends Controller
 
         return view('client.accounts.vendors', compact('vendors'));
     }
+
+//     public function vendorlist(Request $request)
+// {
+//     $query = \App\Models\Vendor::query();
+
+//     if ($request->search) {
+//         $query->where('name', 'like', "%{$request->search}%")
+//               ->orWhere('type', 'like', "%{$request->search}%")
+//               ->orWhere('phone', 'like', "%{$request->search}%");
+//     }
+
+//     $vendors = $query->latest()->paginate(20);
+
+//     return view('client.accounts.vendors', compact('vendors'));
+// }
 
     private function recalculateBalances()
     {
