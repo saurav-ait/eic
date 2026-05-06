@@ -1,0 +1,153 @@
+@extends('admin-master')
+
+@section('content')
+<main class="main-content">
+
+    <div class="top-bar">
+        <div class="top-bar-title">
+            <h1>Email Templates</h1>
+            <p>{{ now()->format('l, F j, Y') }}</p>
+        </div>
+        <button class="btn-primary" onclick="openModal()">+ Add Template</button>
+    </div>
+
+    @if(session('success'))
+        <div class="alert success">{{ session('success') }}</div>
+    @endif
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Activity Type</th>
+                    <th>Subject</th>
+                    <th>Body Preview</th>
+                    <th style="width:160px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($templates as $template)
+                <tr>
+                    <td>{{ $templates->firstItem() + $loop->index }}</td>
+                    <td><span class="tag">{{ $template->activityType->name ?? '—' }}</span></td>
+                    <td><strong>{{ $template->subject }}</strong></td>
+                    <td><div class="text-truncate">{{ Str::limit($template->body, 50) }}</div></td>
+                    <td>
+                        <div class="action-row">
+                            <button class="btn success btn-xs"
+                                onclick='editTemplate({{ $template->id }}, {{ $template->activity_type_id }}, @json($template->subject), @json($template->body))'>
+                                Edit
+                            </button>
+                            <form action="{{ route('email-templates.destroy', $template->id) }}" method="POST"
+                                  onsubmit="return confirm('Delete?')">
+                                @csrf @method('DELETE')
+                                <button class="btn danger btn-xs">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="5" class="text-center">No templates found</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="pagination">{{ $templates->links() }}</div>
+    </div>
+
+</main>
+
+<div id="templateModal" class="modal">
+    <div class="modal-content" style="width:700px;">
+        <h3 id="modalTitle">Add Email Template</h3>
+        
+        <div class="placeholder-info">
+            <strong>Available Placeholders:</strong>
+            <div class="placeholder-grid">
+                <span class="placeholder-tag">{company_name}</span>
+                <span class="placeholder-tag">{director}</span>
+                <span class="placeholder-tag">{phone}</span>
+                <span class="placeholder-tag">{email}</span>
+                <span class="placeholder-tag">{city}</span>
+                <span class="placeholder-tag">{address}</span>
+                <span class="placeholder-tag">{country}</span>
+                <span class="placeholder-tag">{activity_type}</span>
+                <span class="placeholder-tag">{status}</span>
+                <span class="placeholder-tag">{date}</span>
+                <span class="placeholder-tag">{time}</span>
+            </div>
+        </div>
+
+        <form id="templateForm" method="POST">
+            @csrf
+            <input type="hidden" id="methodField" name="_method">
+
+            <select name="activity_type_id" id="activity_type_id" class="input-field" required>
+                <option value="">Select Activity Type</option>
+                @foreach($activities as $activity)
+                    <option value="{{ $activity->id }}">{{ $activity->name }}</option>
+                @endforeach
+            </select>
+
+            <input type="text" name="subject" id="subject" placeholder="Email Subject (e.g., Hello {company_name})" required>
+            <textarea name="body" id="body" placeholder="Email Body - Use placeholders like {company_name}, {director}, etc." rows="8" required></textarea>
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" onclick="closeModal()" class="btn danger btn-xs">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal() {
+    document.getElementById('templateModal').style.display = 'flex';
+    document.getElementById('templateForm').action = "{{ route('email-templates.store') }}";
+    document.getElementById('methodField').value = '';
+    document.getElementById('modalTitle').innerText = "Add Email Template";
+    document.getElementById('templateForm').reset();
+}
+
+function closeModal() {
+    document.getElementById('templateModal').style.display = 'none';
+}
+
+function editTemplate(id, activity_type_id, subject, body) {
+    openModal();
+    document.getElementById('modalTitle').innerText = "Edit Email Template";
+    document.getElementById('templateForm').action = "{{ url('admin/email-templates') }}/" + id;
+    document.getElementById('methodField').value = "PUT";
+    document.getElementById('activity_type_id').value = activity_type_id;
+    document.getElementById('subject').value = subject;
+    document.getElementById('body').value = body;
+}
+</script>
+
+<style>
+.alert.success { background:#d1fae5; color:#065f46; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center; }
+.table-card { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
+table { width:100%; border-collapse:collapse; }
+th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+th { background:#1E4BA6; color:#fff; }
+tr:hover { background:#f5f8ff; }
+.tag { background:#e3f2fd; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; color:#1976d2; }
+.action-row { display:flex; gap:5px; }
+.btn-xs { padding:4px 8px; font-size:12px; border-radius:4px; border:none; cursor:pointer; }
+.btn.success { background:#38a169; color:#fff; }
+.btn.danger { background:#e53e3e; color:#fff; }
+.btn-primary { background:#1E4BA6; color:#fff; padding:8px 14px; border-radius:6px; border:none; cursor:pointer; }
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:#fff; padding:25px; border-radius:10px; max-width:90%; max-height:90vh; overflow-y:auto; }
+.modal-content input, .modal-content textarea, .input-field { width:100%; margin-bottom:10px; padding:10px; border:1px solid #ccc; border-radius:6px; font-family:inherit; }
+.modal-actions { display:flex; justify-content:space-between; margin-top:15px; }
+.text-center { text-align:center; }
+.text-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px; }
+.placeholder-info { background:#f0f9ff; padding:15px; border-radius:8px; margin-bottom:15px; border-left:4px solid #1E4BA6; }
+.placeholder-info strong { color:#1E4BA6; display:block; margin-bottom:8px; }
+.placeholder-grid { display:flex; flex-wrap:wrap; gap:6px; }
+.placeholder-tag { background:#fff; color:#1E4BA6; padding:4px 8px; border-radius:4px; font-size:11px; font-family:monospace; border:1px solid #bfdbfe; cursor:pointer; }
+.placeholder-tag:hover { background:#1E4BA6; color:#fff; }
+</style>
+
+@endsection

@@ -248,6 +248,24 @@
                         📞 Leads Management
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('activities.index') }}" 
+                    class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
+                        Activities
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('email-templates.index') }}" 
+                    class="{{ request()->routeIs('email-templates.*') ? 'active' : '' }}">
+                        Email Template
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('text-templates.index') }}" 
+                    class="{{ request()->routeIs('text-templates.*') ? 'active' : '' }}">
+                        Text Template
+                    </a>
+                </li>
 
                 <li class="menu-title">Operations</li>
 

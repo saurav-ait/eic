@@ -3,33 +3,37 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Imports\AccountsImport;
 use App\Models\Account;
-use App\Models\Vendor;
-use App\Models\Country;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Exports\AccountsExport;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Imports\AccountsImport;
+use App\Models\Country;
+use App\Models\Vendor;
 
 class AccountController extends Controller
 {
-    private $incomeTypes = ['Received', 'Receivable'];
-    private $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
-
-    /* =======================================================
-     * INDEX
-     * ======================================================= */
     public function index(Request $request)
     {
+        $income = Account::whereIn('entry_type', ['Received','Receivable'])->sum('amount');
+
+        $expense = Account::whereIn('entry_type', [
+            'Payment','Payable','Purchase','Salary','Office costs'
+        ])->sum('amount');
+
+        $balance = Account::latest()->value('balance') ?? 0;
+
+        // Build query with filters
         $query = Account::query();
 
+        // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('vendor_name', 'like', "%{$search}%")
                   ->orWhere('purpose', 'like', "%{$search}%")
                   ->orWhere('details', 'like', "%{$search}%")
@@ -37,81 +41,62 @@ class AccountController extends Controller
             });
         }
 
+        // Vendor filter
         if ($request->filled('vendor')) {
             $query->where('vendor_name', $request->vendor);
         }
 
+        // Country filter
         if ($request->filled('country')) {
             $query->where('country', $request->country);
         }
 
+        // Entry type filter
         if ($request->filled('entry_type')) {
             $query->where('entry_type', $request->entry_type);
         }
 
-        $income = (clone $query)
-            ->whereIn('entry_type', $this->incomeTypes)
-            ->sum('amount');
+        // Compute totals for the current filtered set
+        $income = (clone $query)->whereIn('entry_type', ['Received','Receivable'])->sum('amount');
+        $expense = (clone $query)->whereIn('entry_type', [
+            'Payment','Payable','Purchase','Salary','Office costs'
+        ])->sum('amount');
+        $balance = (clone $query)->latest('date')->value('balance') ?? 0;
 
-        $expense = (clone $query)
-            ->whereIn('entry_type', $this->expenseTypes)
-            ->sum('amount');
+        $accounts = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
 
-        $balance = $income - $expense;
+        $activeCountries = Country::where('status', true)->orderBy('name')->get();
+        $activeVendors = Vendor::where('status', true)->orderBy('name')->get();
 
-        $accounts = $query
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate(20)
-            ->withQueryString();
-
-        $activeCountries = Country::where('status', true)
-            ->orderBy('name')
-            ->get();
-
-        $activeVendors = Vendor::where('status', true)
-            ->orderBy('name')
-            ->get();
-
-        $entryTypes = Account::distinct()
-            ->pluck('entry_type')
-            ->filter()
-            ->sort()
-            ->values();
+        // Get unique entry types for filter dropdown
+        $entryTypes = Account::distinct()->pluck('entry_type')->filter()->sort()->values();
 
         return view('client.accounts.index', compact(
-            'income',
-            'expense',
-            'balance',
-            'accounts',
-            'activeCountries',
-            'activeVendors',
-            'entryTypes'
+            'income','expense','balance','accounts','activeCountries','activeVendors','entryTypes'
         ));
     }
 
-    /* =======================================================
-     * STORE
-     * ======================================================= */
     public function store(Request $request)
     {
         $request->validate([
             'date' => 'required|date',
             'entry_type' => 'required',
             'amount' => 'required|numeric',
-            'last_status' => 'nullable',
+            'last_status' => 'nullable|in:,Pending,Approved,Rejected,Processing,Completed',
             'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
         ]);
 
-        $filePath = $request->hasFile('document')
-            ? $request->file('document')->store('accounts', 'public')
-            : null;
+        // Upload file
+        $filePath = null;
+        if ($request->hasFile('document')) {
+            $filePath = $request->file('document')->store('accounts', 'public');
+        }
 
         Account::create([
             ...$request->except('document'),
             'document' => $filePath,
             'last_status' => $request->last_status ?? 'Pending',
-            'balance' => 0
+            'balance' => 0 // Temporary, will recalculate
         ]);
 
         $this->recalculateBalances();
@@ -119,10 +104,7 @@ class AccountController extends Controller
         return back()->with('success', 'Entry Added');
     }
 
-    /* =======================================================
-     * UPDATE
-     * ======================================================= */
-    public function update(Request $request, int $id)
+    public function update(Request $request, $id)
     {
         $account = Account::findOrFail($id);
 
@@ -130,206 +112,42 @@ class AccountController extends Controller
             'date' => 'required|date',
             'entry_type' => 'required',
             'amount' => 'required|numeric',
-            'last_status' => 'nullable',
+            'last_status' => 'nullable|in:,Pending,Approved,Rejected,Processing,Completed',
             'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
         ]);
 
         $data = $request->except('document');
 
+        // Handle document upload
         if ($request->hasFile('document')) {
+            // Delete old document if exists
             if ($account->document) {
                 Storage::disk('public')->delete($account->document);
             }
             $data['document'] = $request->file('document')->store('accounts', 'public');
         }
 
+        // Set status to Pending if not provided
+        if (!$data['last_status']) {
+            $data['last_status'] = 'Pending';
+        }
+
         $account->update($data);
 
         $this->recalculateBalances();
 
-        return back()->with('success', 'Updated');
+        return back()->with('success', 'Entry Updated Successfully');
     }
 
-    /* =======================================================
-     * DELETE
-     * ======================================================= */
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $account = Account::findOrFail($id);
-
-        if ($account->document) {
-            Storage::disk('public')->delete($account->document);
-        }
-
-        $account->delete();
+        Account::findOrFail($id)->delete();
 
         $this->recalculateBalances();
 
-        return back()->with('success', 'Deleted');
+        return back()->with('success', 'Entry Deleted Successfully');
     }
 
-    /* =======================================================
-     * VENDOR LIST
-     * ======================================================= */
-    public function vendorlist(Request $request)
-    {
-        $data = Account::selectRaw('vendor_name as name, COUNT(*) as count')
-            ->groupBy('vendor_name')
-            ->get()
-            ->map(function ($row) {
-                $total = Account::where('vendor_name', $row->name)->get()
-                    ->reduce(function ($carry, $item) {
-                        if (in_array($item->entry_type, $this->expenseTypes)) return $carry + $item->amount;
-                        if (in_array($item->entry_type, $this->incomeTypes)) return $carry - $item->amount;
-                        return $carry;
-                    }, 0);
-                return ['name' => $row->name, 'count' => $row->count, 'total' => $total];
-            });
-
-        return view('client.accounts.vendors', compact('data'));
-    }
-
-    /* =======================================================
-     * LEDGER
-     * ======================================================= */
-    public function ledger(string $vendor, Request $request)
-    {
-        $query = Account::where('vendor_name', $vendor);
-        $query = $this->applyFilters($query, $request);
-
-        $openingBalance = Account::where('vendor_name', $vendor)
-            ->when($request->from_date, fn($q) =>
-                $q->whereDate('date', '<', $request->from_date)
-            )
-            ->get()
-            ->reduce(function ($carry, $item) {
-                if (in_array($item->entry_type, $this->expenseTypes)) {
-                    return $carry + $item->amount;  // debit increases balance (you owe more)
-                }
-                if (in_array($item->entry_type, $this->incomeTypes)) {
-                    return $carry - $item->amount;  // credit decreases balance (you owe less)
-                }
-                return $carry;
-            }, 0);
-
-        $accounts = $query->orderBy('date')->orderBy('id')->get();
-
-        $runningBalance = $openingBalance;
-
-        foreach ($accounts as $acc) {
-            if (in_array($acc->entry_type, $this->expenseTypes)) {
-                $runningBalance += $acc->amount;  // debit: you owe more
-            } elseif (in_array($acc->entry_type, $this->incomeTypes)) {
-                $runningBalance -= $acc->amount;  // credit: you owe less
-            }
-            $acc->running_balance = $runningBalance;
-        }
-
-        return view('client.accounts.ledger', compact(
-            'accounts',
-            'vendor',
-            'openingBalance'
-        ));
-    }
-
-    /* =======================================================
-     * FILTER HELPER
-     * ======================================================= */
-    private function applyFilters($query, $request)
-    {
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('vendor_name', 'like', "%{$search}%")
-                  ->orWhere('purpose', 'like', "%{$search}%")
-                  ->orWhere('details', 'like', "%{$search}%")
-                  ->orWhere('country', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('date', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('date', '<=', $request->to_date);
-        }
-
-        if ($request->filled('entry_type')) {
-            $query->where('entry_type', $request->entry_type);
-        }
-
-        return $query;
-    }
-
-    /* =======================================================
-     * BALANCE RECALCULATION
-     * ======================================================= */
-    private function recalculateBalances()
-    {
-        $vendors = Account::distinct()->pluck('vendor_name');
-
-        foreach ($vendors as $vendor) {
-            $accounts = Account::where('vendor_name', $vendor)
-                ->orderBy('date')->orderBy('id')->get();
-
-            $balance = 0;
-
-            foreach ($accounts as $acc) {
-                if (in_array($acc->entry_type, $this->expenseTypes)) {
-                    $balance += $acc->amount;
-                } elseif (in_array($acc->entry_type, $this->incomeTypes)) {
-                    $balance -= $acc->amount;
-                }
-
-                $acc->update(['balance' => $balance]);
-            }
-        }
-    }
-
-    /* =======================================================
-     * EXPORT PDF
-     * ======================================================= */
-    public function exportLedgerPDF(string $vendor, Request $request)
-    {
-        $fromDate = $request->from_date;
-        $toDate   = $request->to_date;
-
-        $openingBalance = Account::where('vendor_name', $vendor)
-            ->when($fromDate, fn($q) => $q->whereDate('date', '<', $fromDate))
-            ->orderBy('date')
-            ->orderBy('id')
-            ->get()
-            ->reduce(function ($carry, $item) {
-                if (in_array($item->entry_type, $this->incomeTypes)) {
-                    return $carry + $item->amount;
-                }
-                if (in_array($item->entry_type, $this->expenseTypes)) {
-                    return $carry - $item->amount;
-                }
-                return $carry;
-            }, 0);
-
-        $accounts = Account::where('vendor_name', $vendor)
-            ->when($fromDate, fn($q) => $q->whereDate('date', '>=', $fromDate))
-            ->when($toDate,   fn($q) => $q->whereDate('date', '<=', $toDate))
-            ->orderBy('date')
-            ->orderBy('id')
-            ->get();
-
-        $pdf = Pdf::loadView('admin.accounts.pdf', compact(
-            'accounts',
-            'vendor',
-            'openingBalance'
-        ));
-
-        return $pdf->download("ledger_{$vendor}.pdf");
-    }
-    
-    /* =======================================================
-     * MONTHLY REPORT
-     * ======================================================= */
     public function monthlyReport(Request $request)
     {
         $request->validate([
@@ -359,10 +177,7 @@ class AccountController extends Controller
 
         return view('client.accounts.report', compact('accounts', 'reportLabel', 'generatedAt'));
     }
-    
-    /* =======================================================
-     * EXPORT EXCEL
-     * ======================================================= */
+
     public function exportExcel(Request $request)
     {
         $query = Account::query();
@@ -442,10 +257,7 @@ class AccountController extends Controller
 
         return Excel::download($export, 'accounts.xlsx');
     }
-    
-    /* =======================================================
-     * IMPORT EXCEL
-     * ======================================================= */
+
     public function importExcel(Request $request)
     {
         $request->validate([
@@ -460,10 +272,41 @@ class AccountController extends Controller
             return back()->with('error', 'Import failed: ' . $exception->getMessage());
         }
     }
-    
-    /* =======================================================
-     * EXPORT PDF
-     * ======================================================= */
+
+    // public function exportPDF(Request $request)
+    // {
+    //     $query = Account::query();
+
+    //     // Apply same filters as index
+    //     if ($request->filled('search')) {
+    //         $search = $request->search;
+    //         $query->where(function($q) use ($search) {
+    //             $q->where('vendor_name', 'like', "%{$search}%")
+    //               ->orWhere('purpose', 'like', "%{$search}%")
+    //               ->orWhere('details', 'like', "%{$search}%")
+    //               ->orWhere('country', 'like', "%{$search}%");
+    //         });
+    //     }
+
+    //     if ($request->filled('vendor')) {
+    //         $query->where('vendor_name', $request->vendor);
+    //     }
+
+    //     if ($request->filled('country')) {
+    //         $query->where('country', $request->country);
+    //     }
+
+    //     if ($request->filled('entry_type')) {
+    //         $query->where('entry_type', $request->entry_type);
+    //     }
+
+    //     $accounts = $query->orderBy('date', 'desc')->get();
+
+    //     $pdf = PDF::loadView('admin.accounts.pdf', compact('accounts'));
+
+    //     return $pdf->download('accounts.pdf');
+    // }
+
     public function exportPDF(Request $request)
     {
         $query = Account::query();
@@ -532,5 +375,131 @@ class AccountController extends Controller
         ));
 
         return $pdf->download('accounts.pdf');
+    }
+
+    public function ledger($vendor)
+    {
+        $accounts = Account::when($vendor, function ($q) use ($vendor) {
+                $q->where('vendor_name', $vendor);
+            })
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        // Calculate running balance for this vendor's ledger
+        $runningBalance = 0;
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        foreach ($accounts as $account) {
+            if (in_array($account->entry_type, $incomeTypes)) {
+                $runningBalance += $account->amount;
+            } elseif (in_array($account->entry_type, $expenseTypes)) {
+                $runningBalance -= $account->amount;
+            }
+            $account->running_balance = $runningBalance;
+        }
+
+        return view('client.accounts.ledger', compact('accounts','vendor'));
+    }
+
+    // public function exportLedgerPDF($vendor)
+    // {
+    //     $accounts = Account::where('vendor_name', $vendor)
+    //         ->orderBy('date')
+    //         ->orderBy('id')
+    //         ->get();
+
+    //     // Re-using your existing PDF view logic
+    //     // Ensure the view 'admin.accounts.pdf' is prepared to handle $vendor variable if needed
+    //     $pdf = Pdf::loadView('admin.accounts.pdf', compact('accounts', 'vendor'));
+
+    //     return $pdf->download("ledger_{$vendor}.pdf");
+    // }
+
+    public function exportLedgerPDF($vendor)
+    {
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        // OPTIONAL: if you later add date filter
+        $fromDate = request('from_date');
+
+        // ✅ OPENING BALANCE
+        $openingBalance = Account::where('vendor_name', $vendor)
+            ->when($fromDate, fn($q) => $q->whereDate('date', '<', $fromDate))
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get()
+            ->reduce(function ($carry, $item) use ($incomeTypes, $expenseTypes) {
+                if (in_array($item->entry_type, $incomeTypes)) {
+                    return $carry + $item->amount;
+                }
+                if (in_array($item->entry_type, $expenseTypes)) {
+                    return $carry - $item->amount;
+                }
+                return $carry;
+            }, 0);
+
+        // ✅ CURRENT DATA
+        $accounts = Account::where('vendor_name', $vendor)
+            ->when($fromDate, fn($q) => $q->whereDate('date', '>=', $fromDate))
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        $pdf = Pdf::loadView('admin.accounts.pdf', compact(
+            'accounts',
+            'vendor',
+            'openingBalance'
+        ));
+
+        return $pdf->download("ledger_{$vendor}.pdf");
+    }
+
+    public function vendorlist()
+    {
+        $vendors = Account::select('vendor_name')
+            ->whereNotNull('vendor_name')
+            ->where('vendor_name', '!=', '')
+            ->distinct()
+            ->pluck('vendor_name');
+
+        return view('client.accounts.vendors', compact('vendors'));
+    }
+
+//     public function vendorlist(Request $request)
+// {
+//     $query = \App\Models\Vendor::query();
+
+//     if ($request->search) {
+//         $query->where('name', 'like', "%{$request->search}%")
+//               ->orWhere('type', 'like', "%{$request->search}%")
+//               ->orWhere('phone', 'like', "%{$request->search}%");
+//     }
+
+//     $vendors = $query->latest()->paginate(20);
+
+//     return view('client.accounts.vendors', compact('vendors'));
+// }
+
+    private function recalculateBalances()
+    {
+        $accounts = Account::orderBy('date')->orderBy('id')->get();
+
+        $runningBalance = 0;
+
+        $incomeTypes = ['Received', 'Receivable'];
+        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+
+        foreach ($accounts as $account) {
+            if (in_array($account->entry_type, $incomeTypes)) {
+                $runningBalance += $account->amount;
+            } elseif (in_array($account->entry_type, $expenseTypes)) {
+                $runningBalance -= $account->amount;
+            }
+
+            $account->update(['balance' => $runningBalance]);
+        }
     }
 }

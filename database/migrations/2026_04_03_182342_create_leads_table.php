@@ -13,13 +13,19 @@ return new class extends Migration
     {
         Schema::create('leads', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('phone');
-            $table->string('email')->nullable();
-            $table->foreignId('service_id')->nullable();
-            $table->string('source')->default('Facebook')->change();
-            $table->text('note')->nullable();
-            $table->enum('status', ['new', 'contacted', 'converted', 'rejected'])->default('new');
+
+            $table->foreignId('country_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('activity_type_id')->constrained()->cascadeOnDelete();
+
+            $table->string('company_name');
+            $table->string('director')->nullable();
+            $table->string('phone')->index();
+            $table->string('email')->nullable()->index();
+            $table->text('address')->nullable();
+            $table->string('city')->nullable();
+
+            $table->enum('status', ['New','Contacted','Converted','Lost'])->default('New');
+
             $table->timestamps();
         });
     }

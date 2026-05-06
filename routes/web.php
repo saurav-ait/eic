@@ -20,6 +20,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ActivityTypeController;
+use App\Http\Controllers\EmailTemplateController;
+use App\Http\Controllers\TextTemplateController;
+use Illuminate\Support\Facades\Artisan;
 
 
 /*
@@ -41,6 +45,48 @@ $csrfMiddleware = [
 | PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
+Route::get('/paginationvendorpublish', function () {
+    try {
+        Artisan::call('vendor:publish', [
+            '--tag' => 'laravel-pagination'
+        ]);
+        return "Pagination views published successfully!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+Route::get('/optimizeclear', function () {
+    try {
+        Artisan::call('optimize:clear');
+        return "Optimized!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+Route::get('/viewclear', function () {
+    try {
+        Artisan::call('view:clear');
+        return "Cleared!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+Route::get('/cacheclear', function () {
+    try {
+        Artisan::call('cache:clear');
+        return "Cleared!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+Route::get('/configclear', function () {
+    try {
+        Artisan::call('config:clear');
+        return "Cleared!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
 
 Route::middleware($csrfMiddleware)->group(function () {
 
@@ -216,6 +262,34 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::post('leads', [LeadController::class, 'store'])->name('leads.store');
         Route::put('leads/{id}', [LeadController::class, 'update'])->name('leads.update');
         Route::delete('leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
+        Route::post('leads/import', [LeadController::class, 'import'])->name('leads.import');
+        Route::get('leads/export', [LeadController::class, 'export'])->name('leads.export');
+        Route::post('leads/{id}/send-email', [LeadController::class, 'sendEmail'])->name('leads.send-email');
+        Route::post('leads/{id}/send-text', [LeadController::class, 'sendText'])->name('leads.send-text');
+        
+        /*
+        |---------------- ACTIVITY TYPES MANAGEMENT ----------------|
+        */
+        Route::get('activities', [ActivityTypeController::class, 'index'])->name('activities.index');
+        Route::post('activities', [ActivityTypeController::class, 'store'])->name('activities.store');
+        Route::put('activities/{id}', [ActivityTypeController::class, 'update'])->name('activities.update');
+        Route::delete('activities/{id}', [ActivityTypeController::class, 'destroy'])->name('activities.destroy');
+
+        /*
+        |---------------- EMAIL TEMPLATES MANAGEMENT ----------------|
+        */
+        Route::get('email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
+        Route::post('email-templates', [EmailTemplateController::class, 'store'])->name('email-templates.store');
+        Route::put('email-templates/{id}', [EmailTemplateController::class, 'update'])->name('email-templates.update');
+        Route::delete('email-templates/{id}', [EmailTemplateController::class, 'destroy'])->name('email-templates.destroy');
+
+        /*
+        |---------------- TEXT TEMPLATES MANAGEMENT ----------------|
+        */
+        Route::get('text-templates', [TextTemplateController::class, 'index'])->name('text-templates.index');
+        Route::post('text-templates', [TextTemplateController::class, 'store'])->name('text-templates.store');
+        Route::put('text-templates/{id}', [TextTemplateController::class, 'update'])->name('text-templates.update');
+        Route::delete('text-templates/{id}', [TextTemplateController::class, 'destroy'])->name('text-templates.destroy');
         
         /*
         |---------------- PROFILE ----------------|
