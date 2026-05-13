@@ -13,9 +13,12 @@ use App\Models\LeadLog;
 use App\Imports\LeadsImport;
 use App\Exports\LeadsExport;
 use Maatwebsite\Excel\Facades\Excel;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\LeadEmail;
+=======
+>>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
 
 class LeadController extends Controller
 {
@@ -76,7 +79,11 @@ class LeadController extends Controller
             'director' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
+<<<<<<< HEAD
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost'
+=======
+            'status' => 'nullable|in:New,Contacted,Converted,Lost'
+>>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         ]);
 
         Lead::create($request->all());
@@ -97,7 +104,11 @@ class LeadController extends Controller
             'director' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
+<<<<<<< HEAD
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost'
+=======
+            'status' => 'nullable|in:New,Contacted,Converted,Lost'
+>>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         ]);
 
         $lead->update($request->all());
@@ -114,6 +125,7 @@ class LeadController extends Controller
 
     public function sendEmail($id)
     {
+<<<<<<< HEAD
         \Log::info('SendEmail called for lead ID: ' . $id);
         
         $lead = Lead::findOrFail($id);
@@ -128,12 +140,20 @@ class LeadController extends Controller
         if (!$template) {
             \Log::warning('No template found for activity type: ' . $lead->activity_type_id);
             return back()->with('error', 'No email template found for this activity type');
+=======
+        $lead = Lead::findOrFail($id);
+        $template = EmailTemplate::where('activity_type_id', $lead->activity_type_id)->first();
+
+        if (!$template) {
+            return back()->with('error', 'No email template found');
+>>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         }
 
         // Replace placeholders with actual lead data
         $subject = $this->replacePlaceholders($template->subject, $lead);
         $body = $this->replacePlaceholders($template->body, $lead);
 
+<<<<<<< HEAD
         \Log::info('Attempting to send email to: ' . $lead->email);
 
         try {
@@ -157,6 +177,18 @@ class LeadController extends Controller
             \Log::error('Email send failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to send email: ' . $e->getMessage());
         }
+=======
+        // TODO: Implement mail sending
+        // Mail::to($lead->email)->send(new LeadEmail($subject, $body));
+        
+        LeadLog::create([
+            'lead_id' => $lead->id,
+            'type' => 'email',
+            'content' => "Subject: {$subject}\n\n{$body}"
+        ]);
+
+        return back()->with('success','Email sent successfully');
+>>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
     }
 
     public function sendText($id)
