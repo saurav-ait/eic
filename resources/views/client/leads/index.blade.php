@@ -77,11 +77,7 @@
 
             <select name="status" class="filter-select">
                 <option value="">All Status</option>
-<<<<<<< HEAD
                 @foreach(['New','Contacted','Email Sent','Converted','Lost'] as $st)
-=======
-                @foreach(['New','Contacted','Converted','Lost'] as $st)
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
                     <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>{{ $st }}</option>
                 @endforeach
             </select>
@@ -230,10 +226,7 @@
             <select name="status" id="status" class="input-field">
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
-<<<<<<< HEAD
                 <option value="Email Sent">Email Sent</option>
-=======
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
                 <option value="Converted">Converted</option>
                 <option value="Lost">Lost</option>
             </select>
@@ -382,10 +375,7 @@ tr:hover {
 
 .status-badge.new { background:#dbeafe; color:#1e40af; }
 .status-badge.contacted { background:#fef3c7; color:#92400e; }
-<<<<<<< HEAD
-.status-badge.email.sent { background:#e0e7ff; color:#4338ca; }
-=======
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
+.status-badge.email { background:#e0e7ff; color:#4338ca; }
 .status-badge.converted { background:#d1fae5; color:#065f46; }
 .status-badge.lost { background:#fee2e2; color:#991b1b; }
 

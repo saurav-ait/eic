@@ -13,17 +13,21 @@ use App\Models\LeadLog;
 use App\Imports\LeadsImport;
 use App\Exports\LeadsExport;
 use Maatwebsite\Excel\Facades\Excel;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\LeadEmail;
-=======
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
 
 class LeadController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'country' => 'nullable|exists:countries,id',
+            'activity' => 'nullable|exists:activity_types,id',
+            'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost',
+            'search' => 'nullable|string|max:255'
+        ]);
+
         $query = Lead::with(['country','activity']);
 
         if ($request->filled('country')) {
@@ -35,19 +39,18 @@ class LeadController extends Controller
         }
 
         if ($request->filled('search')) {
-            $s = $request->search;
-            $query->where(function($q) use ($s) {
-                $q->where('company_name','like',"%$s%")
-                ->orWhere('phone','like',"%$s%")
-                ->orWhere('email','like',"%$s%")
-                ->orWhere('city','like',"%$s%");
+            $query->where(function($q) use ($request) {
+                $q->where('company_name','like','%' . $request->search . '%')
+                ->orWhere('phone','like','%' . $request->search . '%')
+                ->orWhere('email','like','%' . $request->search . '%')
+                ->orWhere('city','like','%' . $request->search . '%');
             });
         }
 
         $countries = Country::all();
         $activities = ActivityType::all();
 
-        if ($request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -79,11 +82,7 @@ class LeadController extends Controller
             'director' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-<<<<<<< HEAD
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost'
-=======
-            'status' => 'nullable|in:New,Contacted,Converted,Lost'
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         ]);
 
         Lead::create($request->all());
@@ -91,9 +90,13 @@ class LeadController extends Controller
         return back()->with('success','Lead added successfully');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        $lead = Lead::findOrFail($id);
+        $validated = validator(['id' => $id], [
+            'id' => 'required|integer|exists:leads,id'
+        ])->validate();
+
+        $lead = Lead::findOrFail($validated['id']);
         
         $request->validate([
             'country_id' => 'required|exists:countries,id',
@@ -104,11 +107,7 @@ class LeadController extends Controller
             'director' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-<<<<<<< HEAD
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost'
-=======
-            'status' => 'nullable|in:New,Contacted,Converted,Lost'
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         ]);
 
         $lead->update($request->all());
@@ -116,51 +115,55 @@ class LeadController extends Controller
         return back()->with('success','Lead updated successfully');
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        Lead::findOrFail($id)->delete();
+        $validated = validator(['id' => $id], [
+            'id' => 'required|integer|exists:leads,id'
+        ])->validate();
+
+        Lead::findOrFail($validated['id'])->delete();
 
         return back()->with('success', 'Lead deleted successfully');
     }
 
-    public function sendEmail($id)
+    public function sendEmail(int $id)
     {
-<<<<<<< HEAD
-        \Log::info('SendEmail called for lead ID: ' . $id);
+        $validated = validator(['id' => $id], [
+            'id' => 'required|integer|exists:leads,id'
+        ])->validate();
+
+        Log::info('SendEmail called for lead ID: ' . $validated['id']);
         
-        $lead = Lead::findOrFail($id);
+        $lead = Lead::with('activityType')->findOrFail($validated['id']);
         
         if (!$lead->email) {
-            \Log::warning('Lead has no email: ' . $id);
+            Log::warning('Lead has no email: ' . $validated['id']);
             return back()->with('error', 'Lead does not have an email address');
         }
+
+        if (!$lead->activityType) {
+            Log::warning('Lead has no activity type: ' . $validated['id']);
+            return back()->with('error', 'Lead does not have an activity type assigned');
+        }
         
-        $template = EmailTemplate::where('activity_type_id', $lead->activity_type_id)->first();
+        $template = $lead->activityType->emailTemplates()->first();
 
         if (!$template) {
-            \Log::warning('No template found for activity type: ' . $lead->activity_type_id);
+            Log::warning('No template found for activity type: ' . $lead->activity_type_id);
             return back()->with('error', 'No email template found for this activity type');
-=======
-        $lead = Lead::findOrFail($id);
-        $template = EmailTemplate::where('activity_type_id', $lead->activity_type_id)->first();
-
-        if (!$template) {
-            return back()->with('error', 'No email template found');
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
         }
 
         // Replace placeholders with actual lead data
         $subject = $this->replacePlaceholders($template->subject, $lead);
         $body = $this->replacePlaceholders($template->body, $lead);
 
-<<<<<<< HEAD
-        \Log::info('Attempting to send email to: ' . $lead->email);
+        Log::info('Attempting to send email to: ' . $lead->email);
 
         try {
             // Send email using Mailgun
             Mail::to($lead->email)->send(new LeadEmail($subject, $body));
             
-            \Log::info('Email sent successfully to: ' . $lead->email);
+            Log::info('Email sent successfully to: ' . $lead->email);
             
             // Update lead status to 'Email Sent'
             $lead->update(['status' => 'Email Sent']);
@@ -174,27 +177,24 @@ class LeadController extends Controller
 
             return back()->with('success', 'Email sent successfully to ' . $lead->email . ' and status updated');
         } catch (\Exception $e) {
-            \Log::error('Email send failed: ' . $e->getMessage());
+            Log::error('Email send failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to send email: ' . $e->getMessage());
         }
-=======
-        // TODO: Implement mail sending
-        // Mail::to($lead->email)->send(new LeadEmail($subject, $body));
-        
-        LeadLog::create([
-            'lead_id' => $lead->id,
-            'type' => 'email',
-            'content' => "Subject: {$subject}\n\n{$body}"
-        ]);
-
-        return back()->with('success','Email sent successfully');
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
     }
 
-    public function sendText($id)
+    public function sendText(int $id)
     {
-        $lead = Lead::findOrFail($id);
-        $template = TextTemplate::where('activity_type_id', $lead->activity_type_id)->first();
+        $validated = validator(['id' => $id], [
+            'id' => 'required|integer|exists:leads,id'
+        ])->validate();
+
+        $lead = Lead::with('activityType')->findOrFail($validated['id']);
+
+        if (!$lead->activityType) {
+            return back()->with('error', 'Lead does not have an activity type assigned');
+        }
+
+        $template = $lead->activityType->textTemplates()->first();
 
         if (!$template) {
             return back()->with('error', 'No text template found');
@@ -218,7 +218,7 @@ class LeadController extends Controller
     /**
      * Replace placeholders in template with actual lead data
      */
-    private function replacePlaceholders($text, $lead)
+    private function replacePlaceholders(string $text, Lead $lead)
     {
         $placeholders = [
             '{company_name}' => $lead->company_name,

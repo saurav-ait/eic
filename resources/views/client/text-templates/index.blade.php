@@ -132,7 +132,24 @@ function updateCharCount() {
     charCount.textContent = body.value.length;
 }
 
-document.getElementById('body').addEventListener('input', updateCharCount);
+// Insert placeholder on click
+document.addEventListener('DOMContentLoaded', function() {
+    const bodyField = document.getElementById('body');
+    bodyField.addEventListener('input', updateCharCount);
+    
+    document.querySelectorAll('.placeholder-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            const placeholder = this.textContent;
+            const start = bodyField.selectionStart;
+            const end = bodyField.selectionEnd;
+            const text = bodyField.value;
+            bodyField.value = text.substring(0, start) + placeholder + text.substring(end);
+            bodyField.focus();
+            bodyField.setSelectionRange(start + placeholder.length, start + placeholder.length);
+            updateCharCount();
+        });
+    });
+});
 </script>
 
 <style>

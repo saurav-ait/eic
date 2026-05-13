@@ -122,6 +122,29 @@ function editTemplate(id, activity_type_id, subject, body) {
     document.getElementById('subject').value = subject;
     document.getElementById('body').value = body;
 }
+
+// Insert placeholder on click
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.placeholder-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            const placeholder = this.textContent;
+            const bodyField = document.getElementById('body');
+            const subjectField = document.getElementById('subject');
+            const activeElement = document.activeElement;
+            
+            if (activeElement === bodyField || activeElement === subjectField) {
+                const start = activeElement.selectionStart;
+                const end = activeElement.selectionEnd;
+                const text = activeElement.value;
+                activeElement.value = text.substring(0, start) + placeholder + text.substring(end);
+                activeElement.focus();
+                activeElement.setSelectionRange(start + placeholder.length, start + placeholder.length);
+            } else {
+                bodyField.value += placeholder;
+            }
+        });
+    });
+});
 </script>
 
 <style>

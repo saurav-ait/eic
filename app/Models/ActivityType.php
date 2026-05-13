@@ -11,4 +11,14 @@ class ActivityType extends Model
     public function leads() {
         return $this->hasMany(Lead::class, 'activity_type_id');
     }
+
+    public function emailTemplates()
+    {
+        return $this->hasMany(EmailTemplate::class, 'activity_type_id');
+    }
+
+    public function textTemplates()
+    {
+        return $this->hasMany(TextTemplate::class, 'activity_type_id');
+    }
 }
