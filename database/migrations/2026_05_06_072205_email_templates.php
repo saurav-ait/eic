@@ -12,21 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('email_templates', function (Blueprint $table) {
-<<<<<<< HEAD
             $table->id();
             $table->foreignId('activity_type_id')->constrained()->cascadeOnDelete();
             $table->string('subject');
             $table->longText('body');
             $table->timestamps();
         });
-=======
-        $table->id();
-        $table->foreignId('activity_type_id')->constrained()->cascadeOnDelete();
-        $table->string('subject');
-        $table->longText('body');
-        $table->timestamps();
-    });
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
     }
 
     /**
@@ -34,10 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-<<<<<<< HEAD
         Schema::dropIfExists('email_templates');
-=======
-        //
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
     }
 };

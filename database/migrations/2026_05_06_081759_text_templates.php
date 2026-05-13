@@ -14,10 +14,7 @@ return new class extends Migration
         Schema::create('text_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('activity_type_id')->constrained()->cascadeOnDelete();
-<<<<<<< HEAD
-=======
             $table->enum('channel', ['sms','whatsapp','viber','telegram']);
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
             $table->text('body');
             $table->timestamps();
         });
@@ -28,10 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-<<<<<<< HEAD
         Schema::dropIfExists('text_templates');
-=======
-        //
->>>>>>> 01d981d1e63872bc4fbd707b6c33769aea1b5336
     }
 };

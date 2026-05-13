@@ -88,6 +88,17 @@ Route::get('/configclear', function () {
     }
 });
 
+Route::get('/migratefresh', function () {
+    try {
+        Artisan::call('migrate:fresh', [
+            '--force' => true
+        ]);
+        return "Migrated!";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
 Route::middleware($csrfMiddleware)->group(function () {
 
     Route::get('/', [UserController::class, 'index'])->name('home');
