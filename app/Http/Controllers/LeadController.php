@@ -133,8 +133,7 @@ class LeadController extends Controller
         ])->validate();
 
         Log::info('SendEmail called for lead ID: ' . $validated['id']);
-        
-        $lead = Lead::with('activityType')->findOrFail($validated['id']);
+        $lead = Lead::with(['activityType', 'country'])->findOrFail($validated['id']);
         
         if (!$lead->email) {
             Log::warning('Lead has no email: ' . $validated['id']);
@@ -156,6 +155,9 @@ class LeadController extends Controller
         // Replace placeholders with actual lead data
         $subject = $this->replacePlaceholders($template->subject, $lead);
         $body = $this->replacePlaceholders($template->body, $lead);
+
+        // Format the body for HTML email
+        $body = $this->formatEmailBody($body);
 
         Log::info('Attempting to send email to: ' . $lead->email);
 
@@ -188,7 +190,7 @@ class LeadController extends Controller
             'id' => 'required|integer|exists:leads,id'
         ])->validate();
 
-        $lead = Lead::with('activityType')->findOrFail($validated['id']);
+        $lead = Lead::with(['activityType', 'country'])->findOrFail($validated['id']);
 
         if (!$lead->activityType) {
             return back()->with('error', 'Lead does not have an activity type assigned');
@@ -228,13 +230,29 @@ class LeadController extends Controller
             '{city}' => $lead->city ?? '',
             '{address}' => $lead->address ?? '',
             '{country}' => $lead->country->name ?? '',
-            '{activity_type}' => $lead->activity->name ?? '',
+            '{activity_type}' => $lead->activityType->name ?? '',
             '{status}' => $lead->status,
             '{date}' => now()->format('F d, Y'),
             '{time}' => now()->format('h:i A'),
+            '{b}' => '<b>',
+            '{/b}' => '</b>',
         ];
 
         return str_replace(array_keys($placeholders), array_values($placeholders), $text);
+    }
+
+    /**
+     * Format the email body with proper HTML paragraphs
+     */
+    private function formatEmailBody(string $body)
+    {
+        // Replace double newlines with paragraph breaks
+        $body = preg_replace('/\n\s*\n/', '</p><p>', $body);
+        // Wrap in p tags
+        $body = '<p>' . $body . '</p>';
+        // Replace single newlines with <br>
+        $body = str_replace("\n", '<br>', $body);
+        return $body;
     }
 
     public function import(Request $request)

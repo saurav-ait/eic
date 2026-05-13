@@ -25,7 +25,6 @@
             margin-bottom: 25px;
         }
         .email-body {
-            white-space: pre-wrap;
             word-wrap: break-word;
         }
         .email-footer {
@@ -45,7 +44,7 @@
         </div>
         
         <div class="email-body">
-            {!! nl2br(e($body)) !!}
+            {!! $body !!}
         </div>
         
         <div class="email-footer">

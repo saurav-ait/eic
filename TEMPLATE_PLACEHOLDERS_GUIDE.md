@@ -21,6 +21,8 @@ The Lead Management System supports **dynamic placeholders** in email and text t
 | `{status}` | Lead status | "New" / "Contacted" / "Converted" / "Lost" |
 | `{date}` | Current date | "January 15, 2024" |
 | `{time}` | Current time | "02:30 PM" |
+| `{b}` | Start bold text | `<b>` |
+| `{/b}` | End bold text | `</b>` |
 
 ---
 
@@ -48,6 +50,8 @@ Application Details:
 - Location: {city}, {country}
 - Service: {activity_type}
 - Status: {status}
+
+{b}Important Note:{/b} Please ensure all required documents are prepared.
 - Date: {date}
 
 Best regards,
