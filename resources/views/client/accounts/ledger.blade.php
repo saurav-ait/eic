@@ -24,7 +24,7 @@
     </div>
     @endif
 
-    <!-- ✅ DATE FILTER -->
+    <!-- DATE FILTER -->
     <div class="card no-print" style="margin-bottom:20px;">
         <form method="GET">
             <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
@@ -64,8 +64,8 @@
                     <th>Type</th>
                     <th>Purpose</th>
                     <th>Details</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
+                    <th>Debit</th>    {{-- expense out --}}
+                    <th>Credit</th>   {{-- income in  --}}
                     <th>Balance</th>
                 </tr>
             </thead>
@@ -75,9 +75,10 @@
                     <td colspan="7" style="text-align:right;">
                         Opening Balance (before {{ request('from_date') }}):
                     </td>
-                    <td class="amount">৳{{ number_format($openingBalance, 2) }}</td>
+                    <td class="amount" style="color: {{ $openingBalance < 0 ? '#dc2626' : '#16a34a' }};">{{ $openingBalance < 0 ? '-' : '' }}৳{{ number_format(abs($openingBalance), 2) }}</td>
                 </tr>
                 @endif
+
                 @foreach($accounts as $acc)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
@@ -85,13 +86,8 @@
                     <td><span class="pill">{{ $acc->entry_type }}</span></td>
                     <td>{{ $acc->purpose }}</td>
                     <td>{{ substr($acc->details, 0, 30) ?? '-' }}{{ strlen($acc->details ?? '') > 30 ? '...' : '' }}</td>
-                    <td class="amount">
-                        @if(in_array($acc->entry_type, ['Received','Receivable']))
-                            ৳{{ number_format($acc->amount, 2) }}
-                        @else
-                            -
-                        @endif
-                    </td>
+
+                    {{-- DEBIT = expense going out --}}
                     <td class="amount">
                         @if(in_array($acc->entry_type, ['Payment','Payable','Purchase','Salary','Office costs']))
                             ৳{{ number_format($acc->amount, 2) }}
@@ -99,14 +95,30 @@
                             -
                         @endif
                     </td>
-                    <td class="amount">৳{{ number_format($acc->running_balance, 2) }}</td>
+
+                    {{-- CREDIT = income coming in --}}
+                    <td class="amount">
+                        @if(in_array($acc->entry_type, ['Received','Receivable']))
+                            ৳{{ number_format($acc->amount, 2) }}
+                        @else
+                            -
+                        @endif
+                    </td>
+
+                    {{-- running_balance set by controller --}}
+                    <td class="amount" style="color: {{ $acc->running_balance < 0 ? '#dc2626' : '#16a34a' }};">
+                        {{ $acc->running_balance < 0 ? '-' : '' }}৳{{ number_format(abs($acc->running_balance), 2) }}
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <th colspan="7" style="text-align:right;">Final Balance for {{ $vendor }}:</th>
-                    <th class="amount">৳{{ number_format($accounts->last()?->running_balance ?? 0, 2) }}</th>
+                    @php $finalBalance = $accounts->last()?->running_balance ?? 0; @endphp
+                    <th class="amount" style="color: {{ $finalBalance < 0 ? '#dc2626' : '#16a34a' }};">
+                        {{ $finalBalance < 0 ? '-' : '' }}৳{{ number_format(abs($finalBalance), 2) }}
+                    </th>
                 </tr>
             </tfoot>
         </table>

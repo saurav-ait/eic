@@ -28,19 +28,26 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($vendors as $vendor)
-                @php
-                    $vendorAccounts = \App\Models\Account::where('vendor_name', $vendor)->get();
-                    $totalAmount = $vendorAccounts->sum('amount');
-                    $transactionCount = $vendorAccounts->count();
-                @endphp
+                @foreach($data as $row)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ $vendor }}</td>
-                    <td><span class="pill">{{ $transactionCount }}</span></td>
-                    <td class="amount">৳{{ number_format($totalAmount, 2) }}</td>
+            
+                    <td>{{ $row['name'] }}</td>
+            
                     <td>
-                        <a href="{{ route('accounts.ledger', ['vendor' => $vendor]) }}" class="btn primary" style="text-decoration: none; padding: 6px 12px; font-size: 12px;">View Ledger</a>
+                        <span class="pill">{{ $row['count'] }}</span>
+                    </td>
+            
+                    <td class="amount">
+                        ৳{{ number_format($row['total'], 2) }}
+                    </td>
+            
+                    <td>
+                        <a href="{{ route('accounts.ledger', $row['name']) }}"
+                           class="btn primary"
+                           style="text-decoration:none; padding:6px 12px; font-size:12px;">
+                            View Ledger
+                        </a>
                     </td>
                 </tr>
                 @endforeach

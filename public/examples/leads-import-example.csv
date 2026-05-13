@@ -1,0 +1,3 @@
+company_name,director,phone,email,city,address,country_id,activity_type_id,status
+ABC Company,John Doe,+1234567890,john@abc.com,New York,123 Main St,1,1,New
+XYZ Corp,Jane Smith,+0987654321,jane@xyz.com,London,456 High St,2,2,Contacted
