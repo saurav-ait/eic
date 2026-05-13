@@ -303,10 +303,10 @@ class AccountController extends Controller
             ->get()
             ->reduce(function ($carry, $item) {
                 if (in_array($item->entry_type, $this->incomeTypes)) {
-                    return $carry + $item->amount;
+                    return $carry - $item->amount;  // credit: you owe less
                 }
                 if (in_array($item->entry_type, $this->expenseTypes)) {
-                    return $carry - $item->amount;
+                    return $carry + $item->amount;  // debit: you owe more
                 }
                 return $carry;
             }, 0);
@@ -509,10 +509,10 @@ class AccountController extends Controller
                 ->get()
                 ->reduce(function ($carry, $item) use ($incomeTypes, $expenseTypes) {
                     if (in_array($item->entry_type, $incomeTypes)) {
-                        return $carry + $item->amount;
+                        return $carry - $item->amount;  // credit decreases balance
                     }
                     if (in_array($item->entry_type, $expenseTypes)) {
-                        return $carry - $item->amount;
+                        return $carry + $item->amount;  // debit increases balance
                     }
                     return $carry;
                 }, 0);
