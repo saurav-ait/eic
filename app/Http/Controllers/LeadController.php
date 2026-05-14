@@ -92,13 +92,9 @@ class LeadController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $validated = validator(['id' => $id], [
-            'id' => 'required|integer|exists:leads,id'
-        ])->validate();
-
-        $lead = Lead::findOrFail($validated['id']);
+        $lead = Lead::findOrFail($id);
         
-        $request->validate([
+        $validatedData = $request->validate([
             'country_id' => 'required|exists:countries,id',
             'activity_type_id' => 'required|exists:activity_types,id',
             'company_name' => 'required|string|max:255',
@@ -110,18 +106,14 @@ class LeadController extends Controller
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost'
         ]);
 
-        $lead->update($request->all());
+        $lead->update($validatedData);
 
         return back()->with('success','Lead updated successfully');
     }
 
     public function destroy(int $id)
     {
-        $validated = validator(['id' => $id], [
-            'id' => 'required|integer|exists:leads,id'
-        ])->validate();
-
-        Lead::findOrFail($validated['id'])->delete();
+        Lead::findOrFail($id)->delete();
 
         return back()->with('success', 'Lead deleted successfully');
     }

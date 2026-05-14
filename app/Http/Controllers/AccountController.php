@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Imports\AccountsImport;
+use App\Jobs\RecalculateAccountBalances;
 
 class AccountController extends Controller
 {
@@ -49,15 +50,16 @@ class AccountController extends Controller
             $query->where('entry_type', $request->entry_type);
         }
 
-        $income = (clone $query)
-            ->whereIn('entry_type', $this->incomeTypes)
-            ->sum('amount');
+        $totals = (clone $query)
+            ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount ELSE 0 END) as total_income")
+            ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN amount ELSE 0 END) as total_expense")
+            ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
+                             WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as total_balance")
+            ->first();
 
-        $expense = (clone $query)
-            ->whereIn('entry_type', $this->expenseTypes)
-            ->sum('amount');
-
-        $balance = $income - $expense;
+        $income  = $totals->total_income ?? 0;
+        $expense = $totals->total_expense ?? 0;
+        $balance = $totals->total_balance ?? 0;
 
         $accounts = $query
             ->orderBy('date', 'desc')
@@ -95,26 +97,20 @@ class AccountController extends Controller
      * ======================================================= */
     public function store(Request $request)
     {
-        $request->validate([
-            'date' => 'required|date',
-            'entry_type' => 'required',
-            'amount' => 'required|numeric',
-            'last_status' => 'nullable',
-            'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
-        ]);
+        $validated = $request->validate($this->accountRules());
 
         $filePath = $request->hasFile('document')
             ? $request->file('document')->store('accounts', 'public')
             : null;
 
         Account::create([
-            ...$request->except('document'),
+            ...$validated,
             'document' => $filePath,
-            'last_status' => $request->last_status ?? 'Pending',
+            'last_status' => $validated['last_status'] ?? 'Pending',
             'balance' => 0
         ]);
 
-        $this->recalculateBalances();
+        RecalculateAccountBalances::dispatchSync($validated['vendor_name']);
 
         return back()->with('success', 'Entry Added');
     }
@@ -126,14 +122,7 @@ class AccountController extends Controller
     {
         $account = Account::findOrFail($id);
 
-        $request->validate([
-            'date' => 'required|date',
-            'entry_type' => 'required',
-            'amount' => 'required|numeric',
-            'last_status' => 'nullable',
-            'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
-        ]);
-
+        $validated = $request->validate($this->accountRules());
         $data = $request->except('document');
 
         if ($request->hasFile('document')) {
@@ -143,9 +132,10 @@ class AccountController extends Controller
             $data['document'] = $request->file('document')->store('accounts', 'public');
         }
 
+        $data['last_status'] = $validated['last_status'] ?? 'Pending';
         $account->update($data);
 
-        $this->recalculateBalances();
+        RecalculateAccountBalances::dispatchSync($account->vendor_name);
 
         return back()->with('success', 'Updated');
     }
@@ -163,7 +153,7 @@ class AccountController extends Controller
 
         $account->delete();
 
-        $this->recalculateBalances();
+        RecalculateAccountBalances::dispatchSync($account->vendor_name);
 
         return back()->with('success', 'Deleted');
     }
@@ -173,19 +163,15 @@ class AccountController extends Controller
      * ======================================================= */
     public function vendorlist(Request $request)
     {
-        $data = Account::selectRaw('vendor_name as name, COUNT(*) as count')
+        // Optimized to use a single aggregate query instead of N+1 queries in a loop
+        $data = Account::select('vendor_name as name')
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
+                             WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as total")
             ->groupBy('vendor_name')
-            ->get()
-            ->map(function ($row) {
-                $total = Account::where('vendor_name', $row->name)->get()
-                    ->reduce(function ($carry, $item) {
-                        if (in_array($item->entry_type, $this->expenseTypes)) return $carry + $item->amount;
-                        if (in_array($item->entry_type, $this->incomeTypes)) return $carry - $item->amount;
-                        return $carry;
-                    }, 0);
-                return ['name' => $row->name, 'count' => $row->count, 'total' => $total];
-            });
-
+            ->orderBy('vendor_name')
+            ->get();
+           
         return view('client.accounts.vendors', compact('data'));
     }
 
@@ -194,33 +180,31 @@ class AccountController extends Controller
      * ======================================================= */
     public function ledger(string $vendor, Request $request)
     {
+        $this->ensureVendorLedgerExists($vendor);
+        $request->validate($this->ledgerFilterRules());
+
         $query = Account::where('vendor_name', $vendor);
         $query = $this->applyFilters($query, $request);
 
-        $openingBalance = Account::where('vendor_name', $vendor)
-            ->when($request->from_date, fn($q) =>
-                $q->whereDate('date', '<', $request->from_date)
-            )
-            ->get()
-            ->reduce(function ($carry, $item) {
-                if (in_array($item->entry_type, $this->expenseTypes)) {
-                    return $carry + $item->amount;  // debit increases balance (you owe more)
-                }
-                if (in_array($item->entry_type, $this->incomeTypes)) {
-                    return $carry - $item->amount;  // credit decreases balance (you owe less)
-                }
-                return $carry;
-            }, 0);
+        $openingBalance = 0;
+
+        if ($request->filled('from_date')) {
+            $openingBalance = Account::where('vendor_name', $vendor)
+                ->whereDate('date', '<', $request->from_date)
+                ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
+                                 WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as balance")
+                ->value('balance') ?? 0;
+        }
 
         $accounts = $query->orderBy('date')->orderBy('id')->get();
 
         $runningBalance = $openingBalance;
 
         foreach ($accounts as $acc) {
-            if (in_array($acc->entry_type, $this->expenseTypes)) {
-                $runningBalance += $acc->amount;  // debit: you owe more
-            } elseif (in_array($acc->entry_type, $this->incomeTypes)) {
-                $runningBalance -= $acc->amount;  // credit: you owe less
+            if (in_array($acc->entry_type, $this->incomeTypes)) {
+                $runningBalance += $acc->amount;
+            } elseif (in_array($acc->entry_type, $this->expenseTypes)) {
+                $runningBalance -= $acc->amount;
             }
             $acc->running_balance = $runningBalance;
         }
@@ -264,27 +248,38 @@ class AccountController extends Controller
     }
 
     /* =======================================================
-     * BALANCE RECALCULATION
+     * VALIDATION RULES
      * ======================================================= */
-    private function recalculateBalances()
+    private function accountRules(): array
     {
-        $vendors = Account::distinct()->pluck('vendor_name');
+        return [
+            'date' => 'required|date',
+            'entry_type' => 'required|string|max:255',
+            'vendor_name' => 'required|string|max:255',
+            'vendor_type' => 'nullable|string|max:255',
+            'purpose' => 'nullable|string|max:255',
+            'details' => 'nullable|string|max:1000',
+            'country' => 'nullable|string|max:255',
+            'amount' => 'required|numeric',
+            'last_status' => 'nullable|in:Pending,Approved,Rejected,Processing,Completed',
+            'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ];
+    }
 
-        foreach ($vendors as $vendor) {
-            $accounts = Account::where('vendor_name', $vendor)
-                ->orderBy('date')->orderBy('id')->get();
+    private function ledgerFilterRules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+            'entry_type' => 'nullable|string|max:255',
+        ];
+    }
 
-            $balance = 0;
-
-            foreach ($accounts as $acc) {
-                if (in_array($acc->entry_type, $this->expenseTypes)) {
-                    $balance += $acc->amount;
-                } elseif (in_array($acc->entry_type, $this->incomeTypes)) {
-                    $balance -= $acc->amount;
-                }
-
-                $acc->update(['balance' => $balance]);
-            }
+    private function ensureVendorLedgerExists(string $vendor): void
+    {
+        if (!Account::where('vendor_name', $vendor)->exists()) {
+            abort(404, 'Vendor ledger not found.');
         }
     }
 
@@ -293,23 +288,17 @@ class AccountController extends Controller
      * ======================================================= */
     public function exportLedgerPDF(string $vendor, Request $request)
     {
+        $this->ensureVendorLedgerExists($vendor);
+        $request->validate($this->ledgerFilterRules());
+
         $fromDate = $request->from_date;
         $toDate   = $request->to_date;
 
         $openingBalance = Account::where('vendor_name', $vendor)
             ->when($fromDate, fn($q) => $q->whereDate('date', '<', $fromDate))
-            ->orderBy('date')
-            ->orderBy('id')
-            ->get()
-            ->reduce(function ($carry, $item) {
-                if (in_array($item->entry_type, $this->incomeTypes)) {
-                    return $carry - $item->amount;  // credit: you owe less
-                }
-                if (in_array($item->entry_type, $this->expenseTypes)) {
-                    return $carry + $item->amount;  // debit: you owe more
-                }
-                return $carry;
-            }, 0);
+            ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
+                             WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as balance")
+            ->value('balance') ?? 0;
 
         $accounts = Account::where('vendor_name', $vendor)
             ->when($fromDate, fn($q) => $q->whereDate('date', '>=', $fromDate))
@@ -318,10 +307,17 @@ class AccountController extends Controller
             ->orderBy('id')
             ->get();
 
+        $sortedAccounts = $accounts;
+        $incomeTypes = $this->incomeTypes;
+        $expenseTypes = $this->expenseTypes;
+
         $pdf = Pdf::loadView('admin.accounts.pdf', compact(
             'accounts',
+            'sortedAccounts',
             'vendor',
-            'openingBalance'
+            'openingBalance',
+            'incomeTypes',
+            'expenseTypes'
         ));
 
         return $pdf->download("ledger_{$vendor}.pdf");
@@ -454,7 +450,7 @@ class AccountController extends Controller
 
         try {
             Excel::import(new AccountsImport, $request->file('document'));
-            $this->recalculateBalances();
+            RecalculateAccountBalances::dispatchSync(); // Pass null to recalculate all after mass import
             return back()->with('success', 'Accounts imported successfully.');
         } catch (\Exception $exception) {
             return back()->with('error', 'Import failed: ' . $exception->getMessage());
@@ -504,18 +500,9 @@ class AccountController extends Controller
         if ($fromDate) {
             $openingBalance = Account::when($request->vendor, fn($q) => $q->where('vendor_name', $request->vendor))
                 ->whereDate('date', '<', $fromDate)
-                ->orderBy('date')
-                ->orderBy('id')
-                ->get()
-                ->reduce(function ($carry, $item) use ($incomeTypes, $expenseTypes) {
-                    if (in_array($item->entry_type, $incomeTypes)) {
-                        return $carry - $item->amount;  // credit decreases balance
-                    }
-                    if (in_array($item->entry_type, $expenseTypes)) {
-                        return $carry + $item->amount;  // debit increases balance
-                    }
-                    return $carry;
-                }, 0);
+                ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
+                                 WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as balance")
+                ->value('balance') ?? 0;
         }
 
         // ✅ FILTERED DATA
@@ -526,9 +513,16 @@ class AccountController extends Controller
             ->orderBy('id')
             ->get();
 
-        $pdf = PDF::loadView('admin.accounts.pdf', compact(
+        $sortedAccounts = $accounts;
+        $incomeTypes = $this->incomeTypes;
+        $expenseTypes = $this->expenseTypes;
+
+        $pdf = Pdf::loadView('admin.accounts.pdf', compact(
             'accounts',
-            'openingBalance'
+            'sortedAccounts',
+            'openingBalance',
+            'incomeTypes',
+            'expenseTypes'
         ));
 
         return $pdf->download('accounts.pdf');

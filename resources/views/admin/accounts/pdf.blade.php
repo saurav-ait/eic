@@ -154,6 +154,13 @@
 
     <tbody>
 
+        @php
+            $sortedAccounts = $sortedAccounts ?? ($accounts ?? collect());
+            $incomeTypes = $incomeTypes ?? ['Received', 'Receivable'];
+            $expenseTypes = $expenseTypes ?? ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+            $runningBalance = $openingBalance ?? 0;
+        @endphp
+
         {{-- ✅ OPENING BALANCE --}}
         @if(isset($openingBalance))
         <tr class="opening-row">

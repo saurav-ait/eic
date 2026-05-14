@@ -59,7 +59,10 @@ class JobController extends Controller
     public function updateCategory(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|unique:job_categories,name,' . $id,
+            'name' => [
+                'required',
+                Rule::unique('job_categories')->ignore($id),
+            ],
             'service_id' => 'required|exists:services,id'
         ]);
 
