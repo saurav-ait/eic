@@ -27,8 +27,7 @@
     {{-- STATS --}}
     <div class="stats-grid">
         <div class="stat-card">
-            <h3>Total Passports with Agents</h3>
-            <p>{{ $agents }}</p>
+            <h3>Total Passports: {{ $agents->count() }}</h3>
         </div>
     </div>
 

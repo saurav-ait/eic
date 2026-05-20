@@ -9,7 +9,10 @@ class AgentController extends Controller
 {
     public function index()
     {
-        $agents = Agent::all();
+        $agents = Agent::orderBy('id', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
         return view('client.Agent.index', compact('agents'));
     }
 

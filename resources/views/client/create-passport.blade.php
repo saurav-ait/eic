@@ -74,7 +74,7 @@
                         <input type="text" name="nationality" id="nationality" value="{{ old('nationality') }}" required style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
                     </div>
                 </div>
-                <div class="form-group">
+                <div>
                     <label>Marital Status</label>
 
                     <select name="marital_status"
@@ -92,11 +92,11 @@
                         <option value="Divorced"{{ old('marital_status')=='Divorced' ? 'selected' : '' }}   >Divorced</option>
                     </select>
                 </div>
-                <div class="form-group"></div>
+                <div>
                     <label for="spouse_name">Spouse Name</label>
                     <input type="text" disabled="disabled" name="spouse_name" id="spouse_name" value="{{ old('spouse_name') }}" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
                 </div>
-                <div class="form-group"></div>
+                <div>
                     <label for="occupation">Occupation</label>
                     <input type="text" name="occupation" id="occupation" value="{{ old('occupation') }}" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
                 </div>
@@ -151,9 +151,9 @@
                 </div>
             </fieldset>
 
-            {{-- Agent Information --}}
+            {{-- Agent & Country Information --}}
             <fieldset style="border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                <legend style="font-weight:700; color:#1E4BA6;">Agent Information</legend>
+                <legend style="font-weight:700; color:#1E4BA6;">Agent & Country Information</legend>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                     <div>
                         <label for="agent_id">Agent</label>
@@ -166,7 +166,19 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label for="country_id">Country</label>
+                        <select name="country_id" id="country_id" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
+                            <option value="">Select Country</option>
+                            @foreach($countries as $country)
+                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
+                
             </fieldset>
 
             {{-- Submit --}}

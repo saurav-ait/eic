@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Passport;
 use App\Models\Agent;
+use App\Models\Country;
+use App\Models\Document;
+use App\Models\Video;
+
 
 class PassportController extends Controller
 {
@@ -13,7 +17,9 @@ class PassportController extends Controller
         $agents = Agent::where('status', true)
         ->orderBy('name')
         ->get();
-        return view('client.create-passport', compact('agents'));
+        $countries = Country::orderBy('name')
+            ->get();
+        return view('client.create-passport', compact('agents', 'countries'));
     }
 
     public function store(Request $request)
