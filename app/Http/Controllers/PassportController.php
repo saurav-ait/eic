@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Passport;
+use App\Models\Agent;
 
 class PassportController extends Controller
 {
     public function create()
     {
-        return view('client.create-passport');
+        $agents = Agent::where('status', true)
+        ->orderBy('name')
+        ->get();
+        return view('client.create-passport', compact('agents'));
     }
 
     public function store(Request $request)
@@ -21,9 +25,11 @@ class PassportController extends Controller
             'date_of_birth' => 'required|date',
             'issue_date' => 'required|date',
             'expiry_date' => 'required|date',
+            'marital_status' => 'required|in:Single,Married,Widow,Divorced',
+            'spouse_name' => 'nullable|required_unless:marital_status,Single'
         ]);
 
-        Passport::create($request->only(['passport_number', 'familyname', 'givenname', 'date_of_birth', 'issue_date', 'expiry_date']));
+        Passport::create($request->all());
 
         return redirect()->route('passports.index')->with('success', 'Passport created successfully.');
     }
@@ -39,14 +45,20 @@ class PassportController extends Controller
                 ->orWhere('familyname', 'like', "%{$search}%")
                 ->orWhere('givenname', 'like', "%{$search}%");
         }
+        if ($request->filled('agent')) {
+
+            $query->where('agent_id', $request->agent);
+        }
 
         $passports = $query->orderBy('created_at', 'desc')->paginate(10);
+        $agents = Agent::withCount('passports')->get();
 
-        return view('client.passport-list', compact('passports'));
+        return view('client.passport-list', compact('passports', 'agents'));
     }
 
     public function show(Passport $passport)
     {
+        $passport->load('agent');
         return view('client.passport-show', compact('passport'));
     }
 

@@ -24,6 +24,7 @@ use App\Http\Controllers\ActivityTypeController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\TextTemplateController;
 use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\AgentController;
 
 
 /*
@@ -307,6 +308,14 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         */
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+        /*
+        |------------------AGENT MANAGEMENT------------------|
+        */
+        Route::get('agents', [AgentController::class, 'index'])->name('agent.index');
+        Route::post('agents', [AgentController::class, 'store'])->name('agent.store');
+        Route::put('agents/{id}', [AgentController::class, 'update'])->name('agent.update');
+        Route::delete('agents/{id}', [AgentController::class, 'destroy'])->name('agent.destroy');
 
         /*
         |------------------CoUNTRY MANAGEMENT------------------|

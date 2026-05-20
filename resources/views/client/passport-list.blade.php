@@ -24,6 +24,14 @@
         <div class="toast-error">{{ session('error') }}</div>
     @endif
 
+    {{-- STATS --}}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Passports with Agents</h3>
+            <p>{{ $agents }}</p>
+        </div>
+    </div>
+
     {{-- TOOLBAR --}}
     <div class="toolbar">
         <form method="GET" class="search-box">
@@ -33,6 +41,15 @@
         </form>
     </div>
 
+    <select name="agent" onchange="this.form.submit()" style="margin-bottom:15px; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
+        <option value="">All Agents</option>
+        @foreach($agents as $agent)
+            <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
+                {{ $agent->name }}
+            </option>
+        @endforeach
+    </select>
+
     {{-- TABLE --}}
     <div class="table-card">
         <table>
@@ -40,6 +57,7 @@
                 <tr>
                     <th>#</th>
                     <th>Passport Info</th>
+                    <th style="width:200px;">Agent</th>
                     <th>Status</th>
                     <th style="width:200px;">Action</th>
                 </tr>
@@ -68,6 +86,16 @@
                             <span class="badge free">Available</span>
                         @endif
                     </td>
+
+                    {{-- AGENT --}}
+                    <td>
+                        @if($passport->agent)
+                            {{ $passport->agent->name }}
+                        @else
+                            <span class="muted">No agent assigned</span>
+                        @endif
+                    </td>
+
 
                     {{-- ACTION --}}
                     <td>
@@ -277,5 +305,25 @@ tr:hover {
 }
 
 </style>
+<script>
+    //agent filter auto submit
+    document.querySelector('select[name="agent"]').addEventListener('change', function() {
+        this.form.submit();
+    });
+    //search filter auto submit
+    document.querySelector('.search-box input[name="search"]').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.form.submit();
+        }
+    });
+    //delete passport confirmation    
+    document.querySelectorAll('form[action*="passports"][method="POST"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('Delete this passport?')) {
+                e.preventDefault();
+            }
+        });
+</script>
 
 @endsection

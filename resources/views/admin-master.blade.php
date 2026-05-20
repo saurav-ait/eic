@@ -229,6 +229,13 @@
                 <li class="menu-title">CRM</li>
 
                 <li>
+                    <a href="{{ route('agent.index') }}" 
+                    class="{{ request()->routeIs('agent.*') ? 'active' : '' }}">
+                        🕒 Agents
+                    </a>
+                </li>
+
+                <li>
                     <a href="{{ route('country.index') }}" 
                     class="{{ request()->routeIs('country.*') ? 'active' : '' }}">
                         🌍 Countries

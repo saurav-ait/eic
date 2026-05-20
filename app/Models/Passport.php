@@ -15,9 +15,10 @@ class Passport extends Model
     protected $fillable = [
         'familyname', 'givenname', 'father_name', 'mother_name',
         'date_of_birth', 'place_of_birth', 'gender', 'nationality',
+        'marital_status','spouse_name', 'occupation',
         'passport_number', 'issue_date', 'expiry_date', 'place_of_issue',
         'address', 'phone', 'email',
-        'job_subcategory_id', 'status_id',
+        'job_subcategory_id', 'status_id','agent_id',
     ];
     public function documents()
     {
@@ -35,6 +36,10 @@ class Passport extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+    public function agent()
+    {
+        return $this->belongsTo(Agent::class);
     }
 
 }

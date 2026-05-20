@@ -74,6 +74,32 @@
                         <input type="text" name="nationality" id="nationality" value="{{ old('nationality') }}" required style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Marital Status</label>
+
+                    <select name="marital_status"
+                            id="marital_status"
+                            class="form-control"
+                            required>
+                        <option value="">Select</option>
+
+                        <option value="Single"{{ old('marital_status')=='Single' ? 'selected' : '' }}>Single</option>
+
+                        <option value="Married"{{ old('marital_status')=='Married' ? 'selected' : '' }}>Married</option>
+
+                        <option value="Widow"{{ old('marital_status')=='Widow' ? 'selected' : '' }}>Widow</option>
+
+                        <option value="Divorced"{{ old('marital_status')=='Divorced' ? 'selected' : '' }}   >Divorced</option>
+                    </select>
+                </div>
+                <div class="form-group"></div>
+                    <label for="spouse_name">Spouse Name</label>
+                    <input type="text" disabled="disabled" name="spouse_name" id="spouse_name" value="{{ old('spouse_name') }}" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
+                </div>
+                <div class="form-group"></div>
+                    <label for="occupation">Occupation</label>
+                    <input type="text" name="occupation" id="occupation" value="{{ old('occupation') }}" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
+                </div>
             </fieldset>
 
             {{-- Passport Information --}}
@@ -121,6 +147,24 @@
                     <div>
                         <label for="email">Email</label>
                         <input type="email" name="email" id="email" value="{{ old('email') }}" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
+                    </div>
+                </div>
+            </fieldset>
+
+            {{-- Agent Information --}}
+            <fieldset style="border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <legend style="font-weight:700; color:#1E4BA6;">Agent Information</legend>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <label for="agent_id">Agent</label>
+                        <select name="agent_id" id="agent_id" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;">
+                            <option value="">Select Agent</option>
+                            @foreach($agents as $agent)
+                                <option value="{{ $agent->id }}" {{ old('agent_id') == $agent->id ? 'selected' : '' }}>
+                                    {{ $agent->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </fieldset>
@@ -221,4 +265,28 @@ select:focus {
     .btn-primary { font-size:12px; padding:6px 10px; }
 }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const maritalStatus = document.getElementById('marital_status');
+    const spouseName    = document.getElementById('spouse_name');
+
+    function toggleSpouseField() {
+
+        if (maritalStatus.value === 'Single') {
+
+            spouseName.disabled = true;
+            spouseName.value = '';
+
+        } else {
+
+            spouseName.disabled = false;
+        }
+    }
+
+    toggleSpouseField();
+
+    maritalStatus.addEventListener('change', toggleSpouseField);
+});
+</script>
 @endsection

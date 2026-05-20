@@ -21,6 +21,14 @@ return new class extends Migration
             $table->string('place_of_birth');
             $table->enum('gender', ['Male', 'Female']);
             $table->string('nationality');
+            $table->enum('marital_status', [
+                'Single',
+                'Married',
+                'Widow',
+                'Divorced'
+            ])->default('Single');
+            $table->string('spouse_name')->nullable();
+            $table->string('occupation')->nullable();
 
             // Passport Details
             $table->string('passport_number')->unique();
@@ -35,6 +43,10 @@ return new class extends Migration
             
             $table->timestamps();
             $table->foreignId('status_id')->nullable();
+            $table->foreignId('agent_id')
+            ->nullable()
+            ->constrained()
+            ->nullOnDelete();
         });
     }
 

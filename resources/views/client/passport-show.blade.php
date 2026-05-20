@@ -21,6 +21,7 @@
         <h2>{{ $passport->full_name }}</h2>
 
         <div class="info-grid">
+            <div><strong>Agent:</strong> {{ $passport->agent ? $passport->agent->name : 'No agent assigned' }}</div>
             <div><strong>Passport No:</strong> {{ $passport->passport_number }}</div>
             <div><strong>Date of Birth:</strong> {{ $passport->date_of_birth }}</div>
             <div><strong>Place of Birth:</strong> {{ $passport->place_of_birth }}</div>
@@ -29,6 +30,12 @@
             <div><strong>Nationality:</strong> {{ $passport->nationality }}</div>
             <div><strong>Gender:</strong> {{ $passport->gender }}</div>
             <div><strong>Phone:</strong> {{ $passport->phone }}</div>
+            <div><strong>Email:</strong> {{ $passport->email }}</div>
+            <div><strong>Occupation:</strong> {{ $passport->occupation }}</div>
+            <div><strong>Marital Status:</strong> {{ $passport->marital_status }}</div>
+            @if($passport->marital_status == 'Married')
+                <div><strong>Spouse Name:</strong> {{ $passport->spouse_name }}</div>
+            @endif
         </div>
 
         <div class="full-width">
