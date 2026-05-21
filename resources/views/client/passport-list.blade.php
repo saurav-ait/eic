@@ -27,24 +27,32 @@
     {{-- STATS --}}
     <div class="stats-grid">
         <div class="stat-card">
-            <h3>Total Passports: {{ $agents->count() }}</h3>
+            <h3>Total Passports with agent: {{ $agents->count() }}</h3>
         </div>
     </div>
 
     {{-- TOOLBAR --}}
     <div class="toolbar">
-        <form method="GET" class="search-box">
+        <form method="GET" action="{{ route('passports.index') }}" class="search-box">
             <input type="text" name="search" value="{{ request('search') }}"
                    placeholder="Search passport no / name">
-            <select name="agent" onchange="this.form.submit()" style="margin-bottom:0; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
+            <select name="agent" style="margin-bottom:0; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
                 <option value="">All Agents</option>
-                @foreach($agents as $agent)
+                @foreach($allagents as $agent)
                     <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
                         {{ $agent->name }}
                     </option>
                 @endforeach
             </select>
-            <button class="btn-primary">Search</button>
+            <select name="country" style="margin-bottom:0; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
+                <option value="">All Countries</option>
+                @foreach($allcountries as $country)
+                    <option value="{{ $country->id }}" {{ request('country') == $country->id ? 'selected' : '' }}>
+                        {{ $country->name }}
+                    </option>
+                @endforeach
+            </select>
+            <button type="submit" class="btn-primary">Search</button>
         </form>
     </div>
 
@@ -401,7 +409,8 @@ tr:hover {
 </style>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const agentSelect = document.querySelector('select[name="agent"]');
+        const countrySelect = document.querySelector('form.search-box select[name="country"]');
+        const agentSelect = document.querySelector('form.search-box select[name="agent"]');
         const searchInput = document.querySelector('.search-box input[name="search"]');
         const deleteForms = document.querySelectorAll('.delete-passport-form');
         const editPassportModal = document.getElementById('editPassport');
@@ -412,7 +421,18 @@ tr:hover {
 
         if (agentSelect) {
             agentSelect.addEventListener('change', function () {
-                this.form.submit();
+                const form = this.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            });
+        }
+        if (countrySelect) {
+            countrySelect.addEventListener('change', function () {
+                const form = this.closest('form');
+                if (form) {
+                    form.submit();
+                }
             });
         }
 

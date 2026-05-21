@@ -55,14 +55,17 @@ class PassportController extends Controller
 
             $query->where('agent_id', $request->agent);
         }
-
+        if ($request->filled('country')) {
+            $query->where('country_id', $request->country);
+        }
         $passports = $query->orderBy('created_at', 'desc')->paginate(10);
         $agentswithpassports = Passport::whereNotNull('agent_id')->pluck('agent_id')->unique();
         $agents = Agent::whereIn('id', $agentswithpassports)->orderBy('name')->get();
 
         $allagents = Agent::orderBy('name')->get();
+        $allcountries = Country::orderBy('name')->get();
 
-        return view('client.passport-list', compact('passports', 'agents', 'allagents'));
+        return view('client.passport-list', compact('passports', 'agents', 'allagents', 'allcountries'));
     }
 
     public function show(Passport $passport)
