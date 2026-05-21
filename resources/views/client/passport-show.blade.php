@@ -17,15 +17,24 @@
     </div>
 
     {{-- PASSPORT INFO --}}
-    <div class="card info-card">
-        <h2>{{ $passport->full_name }}</h2>
+    <div class="card info-card" style="margin-bottom:30px;" id="passport-print-area">
+
+        <div class="info-header">
+            
+            <div>
+                <p class="passport-subtitle">
+                    Passport Details Information: <h2>{{ $passport->givenname }} {{ $passport->familyname }}</h2>
+                </p>
+            </div>
+            <button onclick="printPassportInfo()" class="btn-primary no-print">
+                Print Details
+            </button>
+        </div>
 
         <div class="info-grid">
             <div><strong>Agent:</strong> {{ $passport->agent ? $passport->agent->name : 'No agent assigned' }}</div>
             <div><strong>Interested Country:</strong> {{ $passport->country ? $passport->country->name : 'No country assigned' }}</div>
             <div><strong>Passport No:</strong> {{ $passport->passport_number }}</div>
-            <div><strong>Family Name:</strong> {{ $passport->familyname }}</div>
-            <div><strong>Given Name:</strong> {{ $passport->givenname }}</div>
             <div><strong>Father's Name:</strong> {{ $passport->father_name }}</div>
             <div><strong>Mother's Name:</strong> {{ $passport->mother_name }}</div>
             <div><strong>Place of Issue:</strong> {{ $passport->place_of_issue }}</div>
@@ -165,7 +174,58 @@
     margin-bottom:20px;
 }
 
-/* CARDS */
+/* INFO HEADER */
+.info-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+.passport-subtitle{
+    color:#777;
+    margin-top:4px;
+    font-size:14px;
+}
+
+/* PRINT */
+@media print {
+
+    body *{
+        visibility:hidden;
+    }
+
+    #passport-print-area,
+    #passport-print-area *{
+        visibility:visible;
+    }
+
+    #passport-print-area{
+        position:absolute;
+        left:0;
+        top:0;
+        width:100%;
+        background:#fff;
+        padding:20px;
+    }
+
+    .no-print{
+        display:none !important;
+    }
+
+    .info-grid{
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-card h2{
+        color:#000 !important;
+    }
+
+}
+
+/* CARD */
 .card {
     background:#fff;
     border-radius:10px;
@@ -292,5 +352,10 @@
 }
 
 </style>
+<script>
+function printPassportInfo() {
+    window.print();
+}
+</script>
 
 @endsection
