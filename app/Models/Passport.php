@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\JobSubcategory;
 use App\Models\Status;
+use App\Models\Agent;
+use App\Models\Country;
+
 
 class Passport extends Model
 {
@@ -18,7 +21,7 @@ class Passport extends Model
         'marital_status','spouse_name', 'occupation',
         'passport_number', 'issue_date', 'expiry_date', 'place_of_issue',
         'address', 'phone', 'email',
-        'job_subcategory_id', 'status_id','agent_id',
+        'job_subcategory_id', 'status_id','agent_id','country_id'
     ];
     public function documents()
     {
@@ -40,6 +43,10 @@ class Passport extends Model
     public function agent()
     {
         return $this->belongsTo(Agent::class);
+    }
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 
 }

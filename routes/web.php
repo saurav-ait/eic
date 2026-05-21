@@ -195,6 +195,7 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::post('passports', [PassportController::class, 'store'])->name('passports.store');
         Route::get('passports/{passport}', [PassportController::class, 'show'])->name('passports.show');
         Route::delete('passports/{passport}', [PassportController::class, 'destroy'])->name('passports.destroy');
+        Route::put('passports/{passport}', [PassportController::class, 'update'])->name('passports.update');
 
         /*
         |---------------- DOCUMENTS ----------------|

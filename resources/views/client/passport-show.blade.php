@@ -22,7 +22,13 @@
 
         <div class="info-grid">
             <div><strong>Agent:</strong> {{ $passport->agent ? $passport->agent->name : 'No agent assigned' }}</div>
+            <div><strong>Interested Country:</strong> {{ $passport->country ? $passport->country->name : 'No country assigned' }}</div>
             <div><strong>Passport No:</strong> {{ $passport->passport_number }}</div>
+            <div><strong>Family Name:</strong> {{ $passport->familyname }}</div>
+            <div><strong>Given Name:</strong> {{ $passport->givenname }}</div>
+            <div><strong>Father's Name:</strong> {{ $passport->father_name }}</div>
+            <div><strong>Mother's Name:</strong> {{ $passport->mother_name }}</div>
+            <div><strong>Place of Issue:</strong> {{ $passport->place_of_issue }}</div>
             <div><strong>Date of Birth:</strong> {{ $passport->date_of_birth }}</div>
             <div><strong>Place of Birth:</strong> {{ $passport->place_of_birth }}</div>
             <div><strong>Issue Date:</strong> {{ $passport->issue_date }}</div>

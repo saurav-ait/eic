@@ -47,6 +47,10 @@ return new class extends Migration
             ->nullable()
             ->constrained()
             ->nullOnDelete();
+            $table->foreignId('country_id')
+            ->nullable()
+            ->constrained()
+            ->nullOnDelete();
         });
     }
 

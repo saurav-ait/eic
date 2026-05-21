@@ -57,14 +57,17 @@ class PassportController extends Controller
         }
 
         $passports = $query->orderBy('created_at', 'desc')->paginate(10);
-        $agents = Agent::withCount('passports')->get();
+        $agentswithpassports = Passport::whereNotNull('agent_id')->pluck('agent_id')->unique();
+        $agents = Agent::whereIn('id', $agentswithpassports)->orderBy('name')->get();
 
-        return view('client.passport-list', compact('passports', 'agents'));
+        $allagents = Agent::orderBy('name')->get();
+
+        return view('client.passport-list', compact('passports', 'agents', 'allagents'));
     }
 
     public function show(Passport $passport)
     {
-        $passport->load('agent');
+        $passport->load('agent', 'country');
         return view('client.passport-show', compact('passport'));
     }
 
@@ -77,5 +80,16 @@ class PassportController extends Controller
         $passport->delete();
 
         return redirect()->back()->with('success', 'Passport deleted successfully.');
+    }
+
+    public function update(Request $request, Passport $passport)
+    {
+        $request->validate([
+            'agent_id' => 'nullable|exists:agents,id',
+            'country_id' => 'nullable|exists:countries,id'
+        ]);
+        $passport->update($request->all());
+
+        return redirect()->route('passports.index')->with('success', 'Passport updated successfully.');
     }
 }

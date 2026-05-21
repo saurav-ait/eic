@@ -36,18 +36,17 @@
         <form method="GET" class="search-box">
             <input type="text" name="search" value="{{ request('search') }}"
                    placeholder="Search passport no / name">
+            <select name="agent" onchange="this.form.submit()" style="margin-bottom:0; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
+                <option value="">All Agents</option>
+                @foreach($agents as $agent)
+                    <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
+                        {{ $agent->name }}
+                    </option>
+                @endforeach
+            </select>
             <button class="btn-primary">Search</button>
         </form>
     </div>
-
-    <select name="agent" onchange="this.form.submit()" style="margin-bottom:15px; padding:8px 10px; border:1px solid #ccc; border-radius:6px;">
-        <option value="">All Agents</option>
-        @foreach($agents as $agent)
-            <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
-                {{ $agent->name }}
-            </option>
-        @endforeach
-    </select>
 
     {{-- TABLE --}}
     <div class="table-card">
@@ -57,6 +56,7 @@
                     <th>#</th>
                     <th>Passport Info</th>
                     <th style="width:200px;">Agent</th>
+                    <th style="width:200px;">Country</th>
                     <th>Status</th>
                     <th style="width:200px;">Action</th>
                 </tr>
@@ -95,18 +95,27 @@
                         @endif
                     </td>
 
+                    {{-- COUNTRY --}}
+                    <td>
+                        @if($passport->country)
+                            {{ $passport->country->name }}
+                        @else
+                            <span class="muted">No country assigned</span>
+                        @endif
+                    </td>
 
                     {{-- ACTION --}}
                     <td>
                         <div class="action-row">
 
                             <a href="{{ route('passports.show', $passport->id) }}"
-                               class="btn success btn-xs">
+                               class="btn btn-primary btn-xs" style="text-decoration: none;">
                                View
                             </a>
 
                             <form action="{{ route('passports.destroy', $passport->id) }}"
                                   method="POST"
+                                  class="delete-passport-form"
                                   onsubmit="return confirm('Delete this passport?')">
                                 @csrf
                                 @method('DELETE')
@@ -116,6 +125,12 @@
                                         disabled title="Assigned passports cannot be deleted"
                                     @endif>
                                     Delete
+                                </button>
+                                <button class="btn btn-primary btn-xs passport-edit-button" type="button"
+                                    data-action="{{ route('passports.update', $passport->id) }}"
+                                    data-agent-id="{{ $passport->agent_id }}"
+                                    data-country-id="{{ $passport->country_id }}">
+                                    Edit
                                 </button>
                             </form>
 
@@ -138,8 +153,38 @@
             {{ $passports->withQueryString()->links() }}
         </div>
     </div>
-
+    <!-- Edit Modal -->
+    <div id="editPassport" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Passport</h2>
+            <form id="editPassportForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="form-group">
+                    <label for="agent_id">Agent</label>
+                    <select name="agent_id" id="agent_id">
+                        <option value="">Select Agent</option>
+                        @foreach($allagents as $agent)
+                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="country_id">Country</label>
+                    <select name="country_id" id="country_id">
+                        <option value="">Select Country</option>
+                        @foreach(App\Models\Country::orderBy('name')->get() as $country)
+                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-xs">Save Changes</button>
+            </form>
+        </div>
+    </div>
 </main>
+
 
 {{-- ================= STYLES ================= --}}
 <style>
@@ -224,6 +269,56 @@ tr:hover {
     flex-wrap:wrap;
 }
 
+.modal {
+    display:none;
+    position:fixed;
+    z-index:9999;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    overflow:auto;
+    background:rgba(0,0,0,0.45);
+}
+
+.modal-content {
+    background:#fff;
+    margin:80px auto;
+    padding:24px;
+    border-radius:12px;
+    width:calc(100% - 40px);
+    max-width:520px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.18);
+    position:relative;
+}
+
+.close {
+    position:absolute;
+    right:16px;
+    top:16px;
+    font-size:24px;
+    cursor:pointer;
+    color:#555;
+}
+
+.form-group {
+    margin-bottom:16px;
+}
+
+.form-group label {
+    display:block;
+    margin-bottom:6px;
+    font-weight:600;
+}
+
+.form-group select {
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    background:#fff;
+}
+
 /* BUTTONS */
 .btn {
     border:none;
@@ -305,24 +400,67 @@ tr:hover {
 
 </style>
 <script>
-    //agent filter auto submit
-    document.querySelector('select[name="agent"]').addEventListener('change', function() {
-        this.form.submit();
-    });
-    //search filter auto submit
-    document.querySelector('.search-box input[name="search"]').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            this.form.submit();
+    document.addEventListener('DOMContentLoaded', function () {
+        const agentSelect = document.querySelector('select[name="agent"]');
+        const searchInput = document.querySelector('.search-box input[name="search"]');
+        const deleteForms = document.querySelectorAll('.delete-passport-form');
+        const editPassportModal = document.getElementById('editPassport');
+        const editPassportForm = document.getElementById('editPassportForm');
+        const agentField = document.getElementById('agent_id');
+        const countryField = document.getElementById('country_id');
+        const closeModal = editPassportModal ? editPassportModal.querySelector('.close') : null;
+
+        if (agentSelect) {
+            agentSelect.addEventListener('change', function () {
+                this.form.submit();
+            });
         }
-    });
-    //delete passport confirmation    
-    document.querySelectorAll('form[action*="passports"][method="POST"]').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            if (!confirm('Delete this passport?')) {
-                e.preventDefault();
+
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+        }
+
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                if (!confirm('Delete this passport?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        document.querySelectorAll('.passport-edit-button').forEach(button => {
+            button.addEventListener('click', function () {
+                if (!editPassportModal || !editPassportForm) return;
+
+                editPassportForm.action = this.dataset.action || editPassportForm.action;
+                if (agentField) {
+                    agentField.value = this.dataset.agentId || '';
+                }
+                if (countryField) {
+                    countryField.value = this.dataset.countryId || '';
+                }
+
+                editPassportModal.style.display = 'block';
+            });
+        });
+
+        if (closeModal) {
+            closeModal.addEventListener('click', function () {
+                editPassportModal.style.display = 'none';
+            });
+        }
+
+        window.addEventListener('click', function (e) {
+            if (e.target === editPassportModal) {
+                editPassportModal.style.display = 'none';
             }
         });
+    });
 </script>
 
 @endsection
