@@ -35,9 +35,17 @@
                 <label>Document Type</label>
                 <select name="type" required class="input-field">
                     <option value="">Select Type</option>
+                    <option value="Photo">Photo</option>
+                    <option value="Passport">Passport</option>
+                    <option value="National ID">National ID</option>
+                    <option value="Birth Certificate">Birth Certificate</option>
+                    <option value="Educational Certificate (SSC)">Educational Certificate (SSC)</option>
+                    <option value="Educational Certificate (HSC)">Educational Certificate (HSC)</option>
+                    <option value="Educational Certificate (Diploma)">Educational Certificate (Diploma)</option>
                     <option value="CV">CV</option>
                     <option value="Work Permit">Work Permit</option>
                     <option value="Police Clearance">Police Clearance</option>
+                    <option value="Driving License">Driver's License</option>
                     <option value="Others">Others</option>
                 </select>
             </div>

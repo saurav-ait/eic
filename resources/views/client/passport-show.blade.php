@@ -30,7 +30,16 @@
                 Print Details
             </button>
         </div>
-
+        {{-- IMAGE INFO GRID --}}
+        <div class="info-grid">
+            <p>Image</p>
+            @if($passport->photo)
+                <img src="{{ asset('public/storage/'.$passport->photo) }}" alt="Photo" style="width:100px; height:100px; object-fit:cover; border-radius:6px;">
+            @else
+                <span class="muted">No photo uploaded</span>
+            @endif
+        </div>
+        {{-- PASSPORT INFO GRID--}}
         <div class="info-grid">
             <div><strong>Agent:</strong> {{ $passport->agent ? $passport->agent->name : 'No agent assigned' }}</div>
             <div><strong>Interested Country:</strong> {{ $passport->country ? $passport->country->name : 'No country assigned' }}</div>
@@ -359,3 +368,4 @@ function printPassportInfo() {
 </script>
 
 @endsection
+

@@ -16,7 +16,7 @@ class DocumentController extends Controller
     public function store(Request $request, Passport $passport)
     {
         $request->validate([
-            'type' => 'required|in:CV,Work Permit,Police Clearance,Others',
+            'type' => 'required|in:Photo,Passport,National ID,Birth Certificate,Educational Certificate (SSC),Educational Certificate (HSC),Educational Certificate (Diploma),CV,Work Permit,Police Clearance,Driving License,Others',
             'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
         ]);
 
