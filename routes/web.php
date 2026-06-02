@@ -25,6 +25,7 @@ use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\TextTemplateController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\LawyerController;
 
 
 /*
@@ -333,6 +334,22 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::post('vendors', [VendorController::class, 'store'])->name('vendor.store');
         Route::put('vendors/{id}', [VendorController::class, 'update'])->name('vendor.update');
         Route::delete('vendors/{id}', [VendorController::class, 'destroy'])->name('vendor.destroy');
+
+        /*
+        |------------------LAWYER MANAGEMENT------------------|
+         */
+        Route::get('lawyers', [LawyerController::class, 'lawyerindex'])->name('lawyer.index');
+        Route::post('lawyers', [LawyerController::class, 'storelawyer'])->name('lawyer.store');
+        Route::put('lawyers/{id}', [LawyerController::class, 'updatelawyer'])->name('lawyer.update');
+        Route::delete('lawyers/{id}', [LawyerController::class, 'destroylawyer'])->name('lawyer.destroy');
+
+        /*
+        |------------------LAWYER GROUP MANAGEMENT------------------|
+         */
+        Route::get('lawyergroups', [LawyerController::class, 'lawyergroupindex'])->name('lawyergroup.index');
+        Route::post('lawyergroups', [LawyerController::class, 'storelawyergroup'])->name('lawyergroup.store');
+        Route::put('lawyergroups/{id}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
+        Route::delete('lawyergroups/{id}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
 
     });
 

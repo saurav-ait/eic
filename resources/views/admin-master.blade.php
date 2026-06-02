@@ -243,6 +243,20 @@
                 </li>
 
                 <li>
+                    <a href="{{ route('lawyer.index') }}" 
+                    class="{{ request()->routeIs('lawyer.*') ? 'active' : '' }}">
+                        🧑‍⚖️ Lawyers
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('lawyergroup.index') }}" 
+                    class="{{ request()->routeIs('lawyergroup.*') ? 'active' : '' }}">
+                        🧑‍⚖️ Lawyer Groups
+                    </a>
+                </li>
+
+                <li>
                     <a href="{{ route('vendor.index') }}" 
                     class="{{ request()->routeIs('vendor.*') ? 'active' : '' }}">
                         🏢 Vendors
