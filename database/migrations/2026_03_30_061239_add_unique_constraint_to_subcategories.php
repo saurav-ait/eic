@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('subcategories', function (Blueprint $table) {
-            //
+        Schema::table('job_subcategories', function (Blueprint $table) {
+            $table->dropUnique(['job_category_id', 'name']);
         });
     }
 };
