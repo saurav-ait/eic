@@ -40,7 +40,9 @@ class LawyerController extends Controller
         // Validate input
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:lawyers,name,' . $lawyer->id,
+            'phone' => 'required|string|max:255',
             'email' => 'required|email|max:255',
+            'address' => 'required|string|max:255',
             'status' => 'sometimes|boolean',
         ]);
 
@@ -53,9 +55,8 @@ class LawyerController extends Controller
                          ->with('success', 'Lawyer updated successfully');
     }
 
-    public function destroylawyer($id)
+    public function destroylawyer(Lawyer $lawyer)
     {
-        $lawyer = Lawyer::findOrFail($id);
         $lawyer->delete();
         return redirect()->route('lawyer.index')->with('success', 'Lawyer deleted successfully.');
     }
@@ -63,7 +64,9 @@ class LawyerController extends Controller
     public function lawyergroupindex()
     {
         $groups = LawyerGroup::latest()->paginate(10);
-        $lawyers = Lawyer::latest()->get();
+        $lawyers = Lawyer::where('status', 1)
+        ->latest()
+        ->get();
         return view('client.submissions.lawyergroup', compact('groups', 'lawyers'));
     }
     public function storelawyergroup(Request $request)
@@ -99,9 +102,8 @@ class LawyerController extends Controller
                          ->with('success', 'Lawyer group updated successfully');
     }
 
-    public function destroylawyergroup($id)
+    public function destroylawyergroup(LawyerGroup $group)
     {
-        $group = LawyerGroup::findOrFail($id);
         $group->delete();
         return redirect()->route('lawyergroup.index')->with('success', 'Lawyer group deleted successfully.');
     }

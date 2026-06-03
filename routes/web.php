@@ -340,16 +340,16 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
          */
         Route::get('lawyers', [LawyerController::class, 'lawyerindex'])->name('lawyer.index');
         Route::post('lawyers', [LawyerController::class, 'storelawyer'])->name('lawyer.store');
-        Route::put('lawyers/{id}', [LawyerController::class, 'updatelawyer'])->name('lawyer.update');
-        Route::delete('lawyers/{id}', [LawyerController::class, 'destroylawyer'])->name('lawyer.destroy');
+        Route::put('lawyers/{lawyer}', [LawyerController::class, 'updatelawyer'])->name('lawyer.update');
+        Route::delete('lawyers/{lawyer}', [LawyerController::class, 'destroylawyer'])->name('lawyer.destroy');
 
         /*
         |------------------LAWYER GROUP MANAGEMENT------------------|
          */
         Route::get('lawyergroups', [LawyerController::class, 'lawyergroupindex'])->name('lawyergroup.index');
         Route::post('lawyergroups', [LawyerController::class, 'storelawyergroup'])->name('lawyergroup.store');
-        Route::put('lawyergroups/{id}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
-        Route::delete('lawyergroups/{id}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
+        Route::put('lawyergroups/{group}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
+        Route::delete('lawyergroups/{group}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
 
     });
 

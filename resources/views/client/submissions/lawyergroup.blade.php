@@ -107,11 +107,11 @@
 <style>
 
 /* GRID */
-.grid {
+/* .grid {
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:20px;
-}
+} */
 
 /* CARD */
 .card {

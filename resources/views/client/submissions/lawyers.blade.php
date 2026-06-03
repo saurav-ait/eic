@@ -161,8 +161,8 @@ function validateForm() {
         return false;
     }
 
-    if (!phone) {
-        alert('Phone number is required');
+    if (!email) {
+        alert('Email address is required');
         return false;
     }
 
@@ -173,7 +173,8 @@ function editLawyer(id, name, phone, email, address, status) {
     openModal();
 
     document.getElementById('modalTitle').innerText = "Edit Lawyer";
-    document.getElementById('lawyerForm').action = "{{ route('lawyer.store') }}/" + id;
+    const updateUrl = "{{ route('lawyer.update', ['lawyer' => '__id__']) }}".replace('__id__', id);
+    document.getElementById('lawyerForm').action = updateUrl;
     document.getElementById('methodField').value = "PUT";
 
     document.getElementById('name').value = name;
@@ -249,6 +250,25 @@ th {
 
 tr:hover {
     background:#f5f8ff;
+}
+
+.badge { background:#1E4BA6; color:white; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; }
+
+.tag {
+    background:#e3f2fd;
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+/* HEADER */
+.header {
+    background:#1E4BA6;
+    color:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
 }
 
 /* SOURCE BADGE */

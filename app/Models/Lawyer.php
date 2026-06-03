@@ -19,4 +19,9 @@ class Lawyer extends Model
         return $this->hasMany(LawyerGroup::class, 'lawyer_id');
     }
 
+    public function groups()
+    {
+        return $this->lawyergroup();
+    }
+
 }
