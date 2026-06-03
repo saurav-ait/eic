@@ -48,5 +48,9 @@ class Passport extends Model
     {
         return $this->belongsTo(Country::class);
     }
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
 
 }

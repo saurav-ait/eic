@@ -257,6 +257,13 @@
                 </li>
 
                 <li>
+                    <a href="{{ route('submissions.index') }}" 
+                    class="{{ request()->routeIs('submissions.*') ? 'active' : '' }}">
+                        📄 Submission's
+                    </a>
+                </li>
+
+                <li>
                     <a href="{{ route('vendor.index') }}" 
                     class="{{ request()->routeIs('vendor.*') ? 'active' : '' }}">
                         🏢 Vendors

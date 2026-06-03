@@ -26,6 +26,7 @@ use App\Http\Controllers\TextTemplateController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\LawyerController;
+use App\Http\Controllers\SubmissionController;
 
 
 /*
@@ -350,6 +351,11 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::post('lawyergroups', [LawyerController::class, 'storelawyergroup'])->name('lawyergroup.store');
         Route::put('lawyergroups/{group}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
         Route::delete('lawyergroups/{group}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
+
+        /*
+        |------------------SUBMISSION MANAGEMENT------------------|
+         */
+        Route::resource('submissions', SubmissionController::class);
 
     });
 
