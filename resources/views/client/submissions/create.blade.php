@@ -102,7 +102,16 @@
 
                 <div class="form-group">
                     <label for="visa_type">Visa Type</label>
-                    <input type="text" name="visa_type" id="visa_type" value="{{ old('visa_type') }}" class="form-control">
+                    <select name="visa_type" id="visa_type" class="form-control">
+                        <option value="">Select Visa Type</option>
+                        @if(isset($jobCategories) && $jobCategories->count())
+                            @foreach($jobCategories as $category)
+                                <option value="{{ $category->id }}" {{ old('visa_type') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
                 </div>
 
                 <div class="form-group">

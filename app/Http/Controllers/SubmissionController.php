@@ -8,6 +8,8 @@ use App\Models\Lawyer;
 use App\Models\LawyerGroup;
 use App\Models\Country;
 use Illuminate\Http\Request;
+use App\Models\Agent;
+use App\Models\JobCategory;
 
 class SubmissionController extends Controller
 {
@@ -102,6 +104,8 @@ class SubmissionController extends Controller
 
         $countries = Country::where('status',1)->get();
 
+            $jobCategories = JobCategory::orderBy('name')->get();
+
         $last = Submission::latest('id')->first();
 
                 $next = $last ? $last->id + 1 : 1;
@@ -119,6 +123,7 @@ class SubmissionController extends Controller
                 'lawyers',
                 'groups',
                 'countries',
+                'jobCategories',
                 'submissionNo',
             )
         );
@@ -137,7 +142,7 @@ class SubmissionController extends Controller
             'application_number' => 'nullable|string|max:255',
             'file_number' => 'nullable|string|max:255',
             'embassy_name' => 'nullable|string|max:255',
-            'visa_type' => 'nullable|string|max:255',
+            'visa_type' => 'nullable|exists:job_categories,id',
             'status' => 'required|in:Draft,Submitted,Processing,Document Requested,Approved,Rejected,Returned,Completed',
             'remarks' => 'nullable|string',
         ]);
@@ -165,6 +170,8 @@ class SubmissionController extends Controller
 
         $countries = Country::where('status',1)->get();
 
+        $jobCategories = JobCategory::orderBy('name')->get();
+
         return view(
             'client.submissions.edit',
             compact(
@@ -172,7 +179,8 @@ class SubmissionController extends Controller
                 'passports',
                 'lawyers',
                 'groups',
-                'countries'
+                'countries',
+                'jobCategories'
             )
         );
     }
@@ -190,7 +198,7 @@ class SubmissionController extends Controller
             'application_number' => 'nullable|string|max:255',
             'file_number' => 'nullable|string|max:255',
             'embassy_name' => 'nullable|string|max:255',
-            'visa_type' => 'nullable|string|max:255',
+            'visa_type' => 'nullable|exists:job_categories,id',
             'status' => 'required|in:Draft,Submitted,Processing,Document Requested,Approved,Rejected,Returned,Completed',
             'remarks' => 'nullable|string',
         ]);
@@ -210,5 +218,39 @@ class SubmissionController extends Controller
             'success',
             'Submission deleted'
         );
+    }
+
+    public function show(Request $request, Submission $submission)
+    {
+        $query = Passport::query();
+
+        // If search input exists, filter results
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where('passport_number', 'like', "%{$search}%")
+                ->orWhere('familyname', 'like', "%{$search}%")
+                ->orWhere('givenname', 'like', "%{$search}%");
+        }
+        if ($request->filled('agent')) {
+
+            $query->where('agent_id', $request->agent);
+        }
+        if ($request->filled('country')) {
+            $query->where('country_id', $request->country);
+        }
+        $passports = $query->orderBy('created_at', 'desc')->paginate(10);
+        $agentswithpassports = Passport::whereNotNull('agent_id')->pluck('agent_id')->unique();
+        $agents = Agent::whereIn('id', $agentswithpassports)->orderBy('name')->get();
+
+        $allagents = Agent::orderBy('name')->get();
+        $allcountries = Country::orderBy('name')->get();
+
+        $submission->load([
+            'passport',
+            'lawyer',
+            'lawyerGroup',
+            'country'
+        ]);
+        return view('client.submissions.show', compact('passports', 'agents', 'allagents', 'allcountries', 'submission'));
     }
 }

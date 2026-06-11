@@ -265,12 +265,21 @@
                             <span class="badge badge-{{ $badge }}">
                                 {{ $submission->status }}
                             </span>
+                            <div class="muted small">{{ $submission->updated_at->diffForHumans() }}</div>
 
                         </td>
 
                         <td>
 
                             <div class="action-buttons">
+
+                                <a href="{{ route('submissions.show',$submission) }}"
+                                   class="btn btn-sm btn-secondary">
+
+                                    View
+
+                                </a>
+
 
                                 <a href="{{ route('submissions.edit',$submission) }}"
                                    class="btn btn-sm btn-primary">
@@ -498,6 +507,12 @@
 
 .pagination-wrapper{
     margin-top:20px;
+}
+
+/* TEXT */
+.muted {
+    color:#777;
+    font-size:12px;
 }
 
 </style>

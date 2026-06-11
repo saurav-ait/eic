@@ -10,9 +10,14 @@
             <p class="page-subtitle">Update an existing passport submission record</p>
         </div>
 
-        <a href="{{ route('submissions.index') }}" class="btn btn-secondary">
-            Back
-        </a>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('submission.histories.index', $submission) }}" class="btn btn-primary">
+                View Histories
+            </a>
+            <a href="{{ route('submissions.index') }}" class="btn btn-secondary">
+                Back
+            </a>
+        </div>
     </div>
 
     @if ($errors->any())
@@ -103,7 +108,19 @@
 
                 <div class="form-group">
                     <label for="visa_type">Visa Type</label>
-                    <input type="text" name="visa_type" id="visa_type" value="{{ old('visa_type', $submission->visa_type) }}" class="form-control">
+                    <select name="visa_type" id="visa_type" class="form-control">
+                        <option value="">Select Visa Type</option>
+                        @if(isset($jobCategories) && $jobCategories->count())
+                            @php
+                                $selectedVisa = old('visa_type', $submission->visa_type);
+                            @endphp
+                            @foreach($jobCategories as $category)
+                                <option value="{{ $category->id }}" {{ ($selectedVisa == $category->id || $selectedVisa == $category->name) ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
                 </div>
 
                 <div class="form-group">

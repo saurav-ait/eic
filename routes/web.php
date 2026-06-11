@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\LawyerController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\SubmissionHistoryController;
 
 
 /*
@@ -43,6 +44,7 @@ $csrfMiddleware = [
     VerifyCsrfToken::class,
 ];
 
+use App\Http\Controllers\SubmissionTestController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES
@@ -82,6 +84,7 @@ Route::get('/cacheclear', function () {
         return "Error: " . $e->getMessage();
     }
 });
+
 Route::get('/configclear', function () {
     try {
         Artisan::call('config:clear');
@@ -356,6 +359,41 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         |------------------SUBMISSION MANAGEMENT------------------|
          */
         Route::resource('submissions', SubmissionController::class);
+
+        Route::prefix('submissions/{submission}')
+            ->group(function () {
+
+                Route::get(
+                    '/histories',
+                    [SubmissionHistoryController::class, 'index']
+                )->name('submission.histories.index');
+
+                Route::get(
+                    '/histories/create',
+                    [SubmissionHistoryController::class, 'create']
+                )->name('submission.histories.create');
+
+                Route::post(
+                    '/histories',
+                    [SubmissionHistoryController::class, 'store']
+                )->name('submission.histories.store');
+        });
+
+        Route::get(
+            '/submission-history/{history}/edit',
+            [SubmissionHistoryController::class, 'edit']
+        )->name('submission.histories.edit');
+
+        Route::put(
+            '/submission-history/{history}',
+            [SubmissionHistoryController::class, 'update']
+        )->name('submission.histories.update');
+
+        Route::delete(
+            '/submission-history/{history}',
+            [SubmissionHistoryController::class, 'destroy']
+        )->name('submission.histories.destroy');
+
 
     });
 

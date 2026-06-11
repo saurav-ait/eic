@@ -46,4 +46,9 @@ class Submission extends Model
     {
         return $this->belongsTo(Country::class);
     }
+    public function histories()
+    {
+        return $this->hasMany(SubmissionHistory::class)
+            ->orderByDesc('history_date');
+    }
 }
