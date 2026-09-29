@@ -12,6 +12,7 @@
 
         <div style="display:flex;gap:10px;">
             <button class="btn-secondary" onclick="document.getElementById('importModal').style.display='flex'">Import</button>
+            <a href="{{ asset('examples/leads-import-sample.xlsx') }}" class="btn-secondary" download>Download Sample</a>
             <a href="{{ route('leads.export') }}" class="btn-secondary">Export</a>
             <button class="btn-primary" onclick="openModal()">+ Add Lead</button>
         </div>
@@ -55,7 +56,7 @@
     {{-- SEARCH & FILTERS --}}
     <div class="toolbar">
         <form method="GET" class="search-box">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search company, phone, email...">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search company, phone, city, email...">
             
             <select name="country" class="filter-select">
                 <option value="">All Countries</option>
@@ -71,6 +72,15 @@
                 @foreach($activities as $activity)
                     <option value="{{ $activity->id }}" {{ request('activity') == $activity->id ? 'selected' : '' }}>
                         {{ $activity->name }}
+                    </option>
+                @endforeach
+            </select>
+
+            <select name="city" class="filter-select">
+                <option value="">All Cities</option>
+                @foreach($cities as $city)
+                    <option value="{{ $city }}" {{ request('city') === $city ? 'selected' : '' }}>
+                        {{ $city }}
                     </option>
                 @endforeach
             </select>
@@ -132,7 +142,7 @@
                     </td>
 
                     <td>
-                        <span class="status-badge {{ strtolower($lead->status) }}">
+                        <span class="status-badge {{ strtolower(str_replace(' ', '-', $lead->status)) }}">
                             {{ $lead->status }}
                         </span>
                     </td>
@@ -186,9 +196,29 @@
             </tbody>
         </table>
 
-        <div class="pagination">
-            {{ $leads->withQueryString()->links() }}
-        </div>
+        @if ($leads->hasPages())
+            <div class="pagination-wrapper">
+                @if ($leads->onFirstPage())
+                    <span class="disabled">«</span>
+                @else
+                    <a href="{{ $leads->previousPageUrl() }}">«</a>
+                @endif
+
+                @foreach ($leads->getUrlRange(1, $leads->lastPage()) as $page => $url)
+                    @if ($page == $leads->currentPage())
+                        <span class="active">{{ $page }}</span>
+                    @else
+                        <a href="{{ $url }}">{{ $page }}</a>
+                    @endif
+                @endforeach
+
+                @if ($leads->hasMorePages())
+                    <a href="{{ $leads->nextPageUrl() }}">»</a>
+                @else
+                    <span class="disabled">»</span>
+                @endif
+            </div>
+        @endif
     </div>
 
 </main>
@@ -247,9 +277,10 @@
         <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="input-field">
-            <p class="muted small">Upload Excel or CSV file with columns: company_name, director, phone, email, city, address, country_id, activity_type_id, status</p>
+            <p class="muted small">Upload Excel or CSV with columns like: company_name, director, phone, email, city, address, country, activity_type, status. Numeric country_id/activity_type_id values are also supported.</p>
 
-            <div class="modal-actions">
+            <div class="modal-actions" style="align-items:center; gap:10px;">
+                <a href="{{ asset('examples/leads-import-sample.xlsx') }}" class="btn-secondary" download style="padding:8px 12px;">Download Sample</a>
                 <button type="submit" class="btn-primary">Import</button>
                 <button type="button" onclick="document.getElementById('importModal').style.display='none'" class="btn danger btn-xs">Cancel</button>
             </div>
@@ -375,7 +406,7 @@ tr:hover {
 
 .status-badge.new { background:#dbeafe; color:#1e40af; }
 .status-badge.contacted { background:#fef3c7; color:#92400e; }
-.status-badge.email { background:#e0e7ff; color:#4338ca; }
+.status-badge.email-sent { background:#e0e7ff; color:#4338ca; }
 .status-badge.converted { background:#d1fae5; color:#065f46; }
 .status-badge.lost { background:#fee2e2; color:#991b1b; }
 
@@ -488,6 +519,45 @@ tr:hover {
     border-radius:20px;
     font-size:12px;
     font-weight:600;
+}
+
+/* PAGINATION */
+.pagination-wrapper {
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    margin-top:20px;
+    flex-wrap:wrap;
+}
+
+.pagination-wrapper a,
+.pagination-wrapper span {
+    padding:6px 12px;
+    border-radius:6px;
+    text-decoration:none;
+    font-weight:600;
+    border:1px solid #ccc;
+}
+
+.pagination-wrapper a {
+    background:#fff;
+    color:#1E4BA6;
+}
+
+.pagination-wrapper a:hover {
+    background:#F4C542;
+    color:#111;
+}
+
+.pagination-wrapper .active {
+    background:#1E4BA6;
+    color:#fff;
+    border-color:#1E4BA6;
+}
+
+.pagination-wrapper .disabled {
+    opacity:0.5;
+    cursor:not-allowed;
 }
 
 /* RESPONSIVE */

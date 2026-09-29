@@ -25,6 +25,7 @@ class LeadController extends Controller
             'country' => 'nullable|exists:countries,id',
             'activity' => 'nullable|exists:activity_types,id',
             'status' => 'nullable|in:New,Contacted,Email Sent,Converted,Lost',
+            'city' => 'nullable|string|max:255',
             'search' => 'nullable|string|max:255'
         ]);
 
@@ -38,6 +39,10 @@ class LeadController extends Controller
             $query->where('activity_type_id', $request->activity);
         }
 
+        if ($request->filled('city')) {
+            $query->where('city', $request->city);
+        }
+
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('company_name','like','%' . $request->search . '%')
@@ -49,12 +54,18 @@ class LeadController extends Controller
 
         $countries = Country::all();
         $activities = ActivityType::all();
+        $cities = Lead::query()
+            ->whereNotNull('city')
+            ->where('city', '<>', '')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $leads = $query->latest()->paginate(10);
+        $leads = $query->latest()->paginate(10)->withQueryString();
 
         $todayLeads = Lead::whereDate('created_at', Carbon::today())->count();
         $totalLeads = Lead::count();
@@ -64,6 +75,7 @@ class LeadController extends Controller
             'leads', 
             'countries', 
             'activities', 
+            'cities',
             'todayLeads',
             'totalLeads',
             'monthlyLeads'
@@ -253,9 +265,17 @@ class LeadController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv|max:2048'
         ]);
 
-        Excel::import(new LeadsImport, $request->file('file'));
+        try {
+            Excel::import(new LeadsImport, $request->file('file'));
+        } catch (\Throwable $exception) {
+            Log::error('Lead import failed: ' . $exception->getMessage(), [
+                'exception' => $exception,
+            ]);
 
-        return back()->with('success','Leads imported successfully');
+            return back()->with('error', 'Lead import failed. Please check the file format and try again.');
+        }
+
+        return back()->with('success', 'Leads imported successfully.');
     }
 
     public function export()

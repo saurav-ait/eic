@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -12,6 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Update the status enum to include 'Email Sent'
         DB::statement("ALTER TABLE leads MODIFY COLUMN status ENUM('New','Contacted','Email Sent','Converted','Lost') DEFAULT 'New'");
     }
@@ -21,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Revert back to original enum values
         DB::statement("ALTER TABLE leads MODIFY COLUMN status ENUM('New','Contacted','Converted','Lost') DEFAULT 'New'");
     }

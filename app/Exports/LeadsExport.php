@@ -17,24 +17,21 @@ class LeadsExport implements FromCollection, WithHeadings, WithMapping
     public function headings(): array
     {
         return [
-            'ID',
-            'Company Name',
-            'Director',
-            'Phone',
-            'Email',
-            'City',
-            'Address',
-            'Country',
-            'Activity Type',
-            'Status',
-            'Created At'
+            'company_name',
+            'director',
+            'phone',
+            'email',
+            'city',
+            'address',
+            'country',
+            'activity_type',
+            'status'
         ];
     }
 
     public function map($lead): array
     {
         return [
-            $lead->id,
             $lead->company_name,
             $lead->director,
             $lead->phone,
@@ -44,7 +41,6 @@ class LeadsExport implements FromCollection, WithHeadings, WithMapping
             $lead->country->name ?? '',
             $lead->activity->name ?? '',
             $lead->status,
-            $lead->created_at->format('Y-m-d H:i:s')
         ];
     }
 }
