@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('city')->nullable();
 
-            $table->enum('status', ['New','Contacted','Converted','Lost'])->default('New');
+            $table->enum('status', ['New','Contacted','Email Sent','Converted','Lost'])->default('New');
 
             $table->timestamps();
         });

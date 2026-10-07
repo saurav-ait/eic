@@ -3,568 +3,1530 @@
 @section('content')
 <main class="main-content">
 
-    {{-- HEADER --}}
-    <div class="top-bar">
-        <div class="top-bar-title">
-            <h1>Lead Management</h1>
-            <p>{{ now()->format('l, F j, Y') }}</p>
-        </div>
-
-        <div style="display:flex;gap:10px;">
-            <button class="btn-secondary" onclick="document.getElementById('importModal').style.display='flex'">Import</button>
-            <a href="{{ asset('examples/leads-import-sample.xlsx') }}" class="btn-secondary" download>Download Sample</a>
-            <a href="{{ route('leads.export') }}" class="btn-secondary">Export</a>
-            <button class="btn-primary" onclick="openModal()">+ Add Lead</button>
-        </div>
+{{-- HEADER --}}
+<div class="top-bar">
+    <div class="top-bar-title">
+        <h1>Lead Management</h1>
+        <p>{{ now()->format('l, F j, Y') }}</p>
     </div>
 
-    {{-- ALERT --}}
-    @if(session('success'))
-        <div class="alert success">{{ session('success') }}</div>
-    @endif
+    <div style="display:flex;gap:10px;">
+        <button class="btn-secondary"
+                onclick="document.getElementById('importModal').style.display='flex'">
+            Import
+        </button>
 
-    @if(session('error'))
-        <div class="alert error">{{ session('error') }}</div>
-    @endif
+        <a href="{{ asset('examples/leads-import-sample.xlsx') }}"
+           class="btn-secondary"
+           download>
+            Download Sample
+        </a>
 
-    @if($errors->any())
-        <div class="alert error">
-            <ul style="margin:0;padding-left:20px;">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+        <a href="{{ route('leads.export') }}" class="btn-secondary">
+            Export
+        </a>
 
-    {{-- STATS --}}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Total Leads</h3>
-            <p>{{ $totalLeads }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Today</h3>
-            <p>{{ $todayLeads }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>This Month</h3>
-            <p>{{ $monthlyLeads }}</p>
-        </div>
+        <button class="btn-primary" onclick="openModal()">
+            + Add Lead
+        </button>
+    </div>
+</div>
+
+{{-- ALERT --}}
+@if(session('success'))
+    <div class="alert success">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert error">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert error">
+        <ul style="margin:0;padding-left:20px;">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+{{-- STATS --}}
+<div class="stats-grid">
+
+    <div class="stat-card">
+        <h3>Total Leads</h3>
+        <p>{{ $totalLeads }}</p>
     </div>
 
-    {{-- SEARCH & FILTERS --}}
-    <div class="toolbar">
-        <form method="GET" class="search-box">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search company, phone, city, email...">
-            
-            <select name="country" class="filter-select">
-                <option value="">All Countries</option>
-                @foreach($countries as $country)
-                    <option value="{{ $country->id }}" {{ request('country') == $country->id ? 'selected' : '' }}>
-                        {{ $country->name }}
-                    </option>
-                @endforeach
-            </select>
-
-            <select name="activity" class="filter-select">
-                <option value="">All Activities</option>
-                @foreach($activities as $activity)
-                    <option value="{{ $activity->id }}" {{ request('activity') == $activity->id ? 'selected' : '' }}>
-                        {{ $activity->name }}
-                    </option>
-                @endforeach
-            </select>
-
-            <select name="city" class="filter-select">
-                <option value="">All Cities</option>
-                @foreach($cities as $city)
-                    <option value="{{ $city }}" {{ request('city') === $city ? 'selected' : '' }}>
-                        {{ $city }}
-                    </option>
-                @endforeach
-            </select>
-
-            <select name="status" class="filter-select">
-                <option value="">All Status</option>
-                @foreach(['New','Contacted','Email Sent','Converted','Lost'] as $st)
-                    <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>{{ $st }}</option>
-                @endforeach
-            </select>
-
-            <button class="btn-primary">Filter</button>
-            <a href="{{ route('leads.index') }}" class="btn-secondary">Reset</a>
-        </form>
+    <div class="stat-card">
+        <h3>Today</h3>
+        <p>{{ $todayLeads }}</p>
     </div>
+
+    <div class="stat-card">
+        <h3>This Month</h3>
+        <p>{{ $monthlyLeads }}</p>
+    </div>
+
+</div>
+
+{{-- SEARCH & FILTERS --}}
+<div class="toolbar">
+
+    <form method="GET" class="search-box">
+
+        <input type="text"
+               name="search"
+               value="{{ request('search') }}"
+               placeholder="Search company, phone, city, email...">
+
+        <select name="country" class="filter-select">
+            <option value="">All Countries</option>
+
+            @foreach($countries as $country)
+                <option value="{{ $country->id }}"
+                    {{ request('country') == $country->id ? 'selected' : '' }}>
+                    {{ $country->name }}
+                </option>
+            @endforeach
+
+        </select>
+
+        <select name="activity" class="filter-select">
+            <option value="">All Activities</option>
+
+            @foreach($activities as $activity)
+                <option value="{{ $activity->id }}"
+                    {{ request('activity') == $activity->id ? 'selected' : '' }}>
+                    {{ $activity->name }}
+                </option>
+            @endforeach
+
+        </select>
+
+        <select name="city" class="filter-select">
+            <option value="">All Cities</option>
+
+            @foreach($cities as $city)
+                <option value="{{ $city }}"
+                    {{ request('city') === $city ? 'selected' : '' }}>
+                    {{ $city }}
+                </option>
+            @endforeach
+
+        </select>
+
+        <select name="status" class="filter-select">
+            <option value="">All Status</option>
+
+            @foreach(['New','Contacted','Email Sent','Converted','Lost'] as $st)
+                <option value="{{ $st }}"
+                    {{ request('status') == $st ? 'selected' : '' }}>
+                    {{ $st }}
+                </option>
+            @endforeach
+
+        </select>
+
+        <button class="btn-primary">
+            Filter
+        </button>
+
+        <a href="{{ route('leads.index') }}" class="btn-secondary">
+            Reset
+        </a>
+
+    </form>
+
+</div>
+
+{{-- BULK DELETE FORM --}}
+<form action="{{ route('leads.bulkDelete') }}"
+      method="POST"
+      id="bulkDeleteForm">
+
+    @csrf
+    @method('DELETE')
 
     {{-- TABLE --}}
     <div class="table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Company Info</th>
-                    <th>Contact</th>
-                    <th>Location</th>
-                    <th>Activity Type</th>
-                    <th>Status</th>
-                    <th style="width:220px;">Action</th>
-                </tr>
-            </thead>
 
-            <tbody>
-                @forelse($leads as $lead)
-                <tr>
-                    <td>{{ $leads->firstItem() + $loop->index }}</td>
+        <div class="table-header-actions">
 
-                    <td>
-                        <strong>{{ $lead->company_name }}</strong>
-                        @if($lead->director)
-                            <div class="muted small">{{ $lead->director }}</div>
-                        @endif
-                        <div class="muted small">{{ $lead->created_at->diffForHumans() }}</div>
-                    </td>
+            <div>
+                <strong>Leads</strong>
 
-                    <td>
-                        <div>{{ $lead->phone }}</div>
-                        <div class="muted small">{{ $lead->email ?? '—' }}</div>
-                    </td>
+                <span id="selectedCount" class="selected-count">
+                    0 selected
+                </span>
+            </div>
 
-                    <td>
-                        <div>{{ $lead->city ?? '—' }}</div>
-                        <div class="muted small">{{ $lead->country->name ?? '—' }}</div>
-                    </td>
+            <button type="submit"
+                    id="bulkDeleteBtn"
+                    class="btn danger bulk-delete-btn"
+                    onclick="return confirmBulkDelete()"
+                    disabled>
+                Delete Selected
+            </button>
 
-                    <td>
-                        <span class="tag">
-                            {{ $lead->activity->name ?? '—' }}
-                        </span>
-                    </td>
+        </div>
 
-                    <td>
-                        <span class="status-badge {{ strtolower(str_replace(' ', '-', $lead->status)) }}">
-                            {{ $lead->status }}
-                        </span>
-                    </td>
+        <div class="table-responsive">
 
-                    <td>
-                        <div class="action-row">
-                            <button class="btn success btn-xs"
-                                onclick='editLead(
-                                    {{ $lead->id }},
-                                    @json($lead->company_name),
-                                    @json($lead->director),
-                                    @json($lead->phone),
-                                    @json($lead->email),
-                                    @json($lead->city),
-                                    @json($lead->address),
-                                    {{ $lead->country_id }},
-                                    {{ $lead->activity_type_id }},
-                                    @json($lead->status)
-                                )'>
-                                Edit
-                            </button>
+            <table>
 
-                            @if($lead->email)
-                            <form action="{{ route('leads.send-email', $lead->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                <button type="submit" class="btn info btn-xs" title="Send Email">📧</button>
-                            </form>
-                            @endif
+                <thead>
 
-                            @if($lead->phone)
-                            <form action="{{ route('leads.send-text', $lead->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                <button type="submit" class="btn warning btn-xs" title="Send SMS/WhatsApp">💬</button>
-                            </form>
-                            @endif
+                    <tr>
 
-                            <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
-                                  onsubmit="return confirm('Delete this lead?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn danger btn-xs">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center">No leads found</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        {{-- SELECT ALL --}}
+                        <th style="width:45px;text-align:center;">
+                            <input type="checkbox"
+                                   id="selectAll"
+                                   title="Select all">
+                        </th>
 
+                        <th>#</th>
+
+                        <th>Company Info</th>
+
+                        <th>Contact</th>
+
+                        <th>Location</th>
+
+                        <th>Activity Type</th>
+
+                        <th>Status</th>
+
+                        <th style="width:220px;">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @forelse($leads as $lead)
+
+                        <tr>
+
+                            {{-- CHECKBOX --}}
+                            <td style="text-align:center;">
+
+                                <input type="checkbox"
+                                       name="ids[]"
+                                       value="{{ $lead->id }}"
+                                       class="lead-checkbox">
+
+                            </td>
+
+                            {{-- NUMBER --}}
+                            <td>
+                                {{ $leads->firstItem() + $loop->index }}
+                            </td>
+
+                            {{-- COMPANY --}}
+                            <td>
+
+                                <strong>
+                                    {{ $lead->company_name }}
+                                </strong>
+
+                                @if($lead->director)
+
+                                    <div class="muted small">
+                                        {{ $lead->director }}
+                                    </div>
+
+                                @endif
+
+                                <div class="muted small">
+                                    {{ $lead->created_at->diffForHumans() }}
+                                </div>
+
+                            </td>
+
+                            {{-- CONTACT --}}
+                            <td>
+
+                                <div>
+                                    {{ $lead->phone }}
+                                </div>
+
+                                <div class="muted small">
+                                    {{ $lead->email ?? '—' }}
+                                </div>
+
+                            </td>
+
+                            {{-- LOCATION --}}
+                            <td>
+
+                                <div>
+                                    {{ $lead->city ?? '—' }}
+                                </div>
+
+                                <div class="muted small">
+                                    {{ $lead->country->name ?? '—' }}
+                                </div>
+
+                            </td>
+
+                            {{-- ACTIVITY --}}
+                            <td>
+
+                                <span class="tag">
+                                    {{ $lead->activity->name ?? '—' }}
+                                </span>
+
+                            </td>
+
+                            {{-- STATUS --}}
+                            <td>
+
+                                <span class="status-badge {{ strtolower(str_replace(' ', '-', $lead->status)) }}">
+                                    {{ $lead->status }}
+                                </span>
+
+                            </td>
+
+                            {{-- ACTION --}}
+                            <td>
+
+                                <div class="action-row">
+
+                                    {{-- EDIT --}}
+                                    <button type="button"
+                                            class="btn success btn-xs"
+                                            onclick='editLead(
+                                                {{ $lead->id }},
+                                                @json($lead->company_name),
+                                                @json($lead->director),
+                                                @json($lead->phone),
+                                                @json($lead->email),
+                                                @json($lead->city),
+                                                @json($lead->address),
+                                                {{ $lead->country_id }},
+                                                {{ $lead->activity_type_id }},
+                                                @json($lead->status)
+                                            )'>
+
+                                        Edit
+
+                                    </button>
+
+                                    {{-- SEND EMAIL --}}
+                                    @if($lead->email)
+
+                                        <form action="{{ route('leads.send-email', $lead->id) }}"
+                                              method="POST"
+                                              style="display:inline;">
+
+                                            @csrf
+
+                                            <button type="submit"
+                                                    class="btn info btn-xs"
+                                                    title="Send Email">
+
+                                                📧
+
+                                            </button>
+
+                                        </form>
+
+                                    @endif
+
+                                    {{-- SEND TEXT --}}
+                                    @if($lead->phone)
+
+                                        <form action="{{ route('leads.send-text', $lead->id) }}"
+                                              method="POST"
+                                              style="display:inline;">
+
+                                            @csrf
+
+                                            <button type="submit"
+                                                    class="btn warning btn-xs"
+                                                    title="Send SMS/WhatsApp">
+
+                                                💬
+
+                                            </button>
+
+                                        </form>
+
+                                    @endif
+
+                                    {{-- INDIVIDUAL DELETE --}}
+                                    <form action="{{ route('leads.destroy', $lead->id) }}"
+                                          method="POST"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('Delete this lead?')">
+
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit"
+                                                class="btn danger btn-xs">
+
+                                            Delete
+
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+
+                            <td colspan="8" class="text-center">
+                                No leads found
+                            </td>
+
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {{-- BULK ACTION FOOTER --}}
+        @if($leads->count() > 0)
+
+            <div class="bulk-footer">
+
+                <div class="bulk-info">
+
+                    <input type="checkbox"
+                           id="selectAllBottom">
+
+                    <label for="selectAllBottom">
+                        Select all on this page
+                    </label>
+
+                </div>
+
+                <div>
+
+                    <span id="selectedCountBottom"
+                          class="muted">
+
+                        0 selected
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        @endif
+
+        {{-- PAGINATION --}}
         @if ($leads->hasPages())
+
             <div class="pagination-wrapper">
+
                 @if ($leads->onFirstPage())
-                    <span class="disabled">«</span>
+
+                    <span class="disabled">
+                        «
+                    </span>
+
                 @else
-                    <a href="{{ $leads->previousPageUrl() }}">«</a>
+
+                    <a href="{{ $leads->previousPageUrl() }}">
+                        «
+                    </a>
+
                 @endif
 
                 @foreach ($leads->getUrlRange(1, $leads->lastPage()) as $page => $url)
+
                     @if ($page == $leads->currentPage())
-                        <span class="active">{{ $page }}</span>
+
+                        <span class="active">
+                            {{ $page }}
+                        </span>
+
                     @else
-                        <a href="{{ $url }}">{{ $page }}</a>
+
+                        <a href="{{ $url }}">
+                            {{ $page }}
+                        </a>
+
                     @endif
+
                 @endforeach
 
                 @if ($leads->hasMorePages())
-                    <a href="{{ $leads->nextPageUrl() }}">»</a>
+
+                    <a href="{{ $leads->nextPageUrl() }}">
+                        »
+                    </a>
+
                 @else
-                    <span class="disabled">»</span>
+
+                    <span class="disabled">
+                        »
+                    </span>
+
                 @endif
+
             </div>
+
         @endif
+
     </div>
+
+</form>
 
 </main>
 
-{{-- ================= ADD/EDIT MODAL ================= --}}
+{{-- ========================================================= --}}
+{{-- ADD / EDIT MODAL --}}
+{{-- ========================================================= --}}
 <div id="leadModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Add Lead</h3>
 
-        <form id="leadForm" method="POST">
-            @csrf
-            <input type="hidden" id="methodField" name="_method">
+<div class="modal-content">
 
-            <input type="text" name="company_name" id="company_name" placeholder="Company Name" required>
-            <input type="text" name="director" id="director" placeholder="Director Name">
-            <input type="text" name="phone" id="phone" placeholder="Phone" required>
-            <input type="email" name="email" id="email" placeholder="Email">
-            <input type="text" name="city" id="city" placeholder="City">
-            <textarea name="address" id="address" placeholder="Address" rows="2"></textarea>
+    <h3 id="modalTitle">
+        Add Lead
+    </h3>
 
-            <select name="country_id" id="country_id" class="input-field" required>
-                <option value="">Select Country</option>
-                @foreach($countries as $country)
-                    <option value="{{ $country->id }}">{{ $country->name }}</option>
-                @endforeach
-            </select>
+    <form id="leadForm" method="POST">
 
-            <select name="activity_type_id" id="activity_type_id" class="input-field" required>
-                <option value="">Select Activity Type</option>
-                @foreach($activities as $activity)
-                    <option value="{{ $activity->id }}">{{ $activity->name }}</option>
-                @endforeach
-            </select>
+        @csrf
 
-            <select name="status" id="status" class="input-field">
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Email Sent">Email Sent</option>
-                <option value="Converted">Converted</option>
-                <option value="Lost">Lost</option>
-            </select>
+        <input type="hidden"
+               id="methodField"
+               name="_method">
 
-            <div class="modal-actions">
-                <button type="submit" class="btn-primary">Save</button>
-                <button type="button" onclick="closeModal()" class="btn danger btn-xs">Cancel</button>
-            </div>
-        </form>
-    </div>
+        <input type="text"
+               name="company_name"
+               id="company_name"
+               placeholder="Company Name"
+               required>
+
+        <input type="text"
+               name="director"
+               id="director"
+               placeholder="Director Name">
+
+        <input type="text"
+               name="phone"
+               id="phone"
+               placeholder="Phone"
+               required>
+
+        <input type="email"
+               name="email"
+               id="email"
+               placeholder="Email">
+
+        <input type="text"
+               name="city"
+               id="city"
+               placeholder="City">
+
+        <textarea name="address"
+                  id="address"
+                  placeholder="Address"
+                  rows="2"></textarea>
+
+        <select name="country_id"
+                id="country_id"
+                class="input-field"
+                required>
+
+            <option value="">
+                Select Country
+            </option>
+
+            @foreach($countries as $country)
+
+                <option value="{{ $country->id }}">
+                    {{ $country->name }}
+                </option>
+
+            @endforeach
+
+        </select>
+
+        <select name="activity_type_id"
+                id="activity_type_id"
+                class="input-field"
+                required>
+
+            <option value="">
+                Select Activity Type
+            </option>
+
+            @foreach($activities as $activity)
+
+                <option value="{{ $activity->id }}">
+                    {{ $activity->name }}
+                </option>
+
+            @endforeach
+
+        </select>
+
+        <select name="status"
+                id="status"
+                class="input-field">
+
+            <option value="New">
+                New
+            </option>
+
+            <option value="Contacted">
+                Contacted
+            </option>
+
+            <option value="Email Sent">
+                Email Sent
+            </option>
+
+            <option value="Converted">
+                Converted
+            </option>
+
+            <option value="Lost">
+                Lost
+            </option>
+
+        </select>
+
+        <div class="modal-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Save
+
+            </button>
+
+            <button type="button"
+                    onclick="closeModal()"
+                    class="btn danger btn-xs">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </form>
+
 </div>
 
-{{-- ================= IMPORT MODAL ================= --}}
+</div>
+
+{{-- ========================================================= --}}
+{{-- IMPORT MODAL --}}
+{{-- ========================================================= --}}
 <div id="importModal" class="modal">
-    <div class="modal-content">
-        <h3>Import Leads</h3>
 
-        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="input-field">
-            <p class="muted small">Upload Excel or CSV with columns like: company_name, director, phone, email, city, address, country, activity_type, status. Numeric country_id/activity_type_id values are also supported.</p>
+<div class="modal-content">
 
-            <div class="modal-actions" style="align-items:center; gap:10px;">
-                <a href="{{ asset('examples/leads-import-sample.xlsx') }}" class="btn-secondary" download style="padding:8px 12px;">Download Sample</a>
-                <button type="submit" class="btn-primary">Import</button>
-                <button type="button" onclick="document.getElementById('importModal').style.display='none'" class="btn danger btn-xs">Cancel</button>
-            </div>
-        </form>
-    </div>
+    <h3>
+        Import Leads
+    </h3>
+
+    <form action="{{ route('leads.import') }}"
+          method="POST"
+          enctype="multipart/form-data">
+
+        @csrf
+
+        <input type="file"
+               name="file"
+               accept=".xlsx,.xls,.csv"
+               required
+               class="input-field">
+
+        <p class="muted small">
+
+            Upload Excel or CSV with columns like:
+            company_name, director, phone, email, city,
+            address, country, activity_type, status.
+
+            Numeric country_id/activity_type_id values are also supported.
+
+        </p>
+
+        <div class="modal-actions"
+             style="align-items:center;gap:10px;">
+
+            <a href="{{ asset('examples/leads-import-sample.xlsx') }}"
+               class="btn-secondary"
+               download
+               style="padding:8px 12px;">
+
+                Download Sample
+
+            </a>
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Import
+
+            </button>
+
+            <button type="button"
+                    onclick="document.getElementById('importModal').style.display='none'"
+                    class="btn danger btn-xs">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </form>
+
 </div>
 
-{{-- ================= JS ================= --}}
+</div>
+
+{{-- ========================================================= --}}
+{{-- JAVASCRIPT --}}
+{{-- ========================================================= --}}
 <script>
-function openModal() {
-    document.getElementById('leadModal').style.display = 'flex';
-    document.getElementById('leadForm').action = "{{ route('leads.store') }}";
-    document.getElementById('methodField').value = '';
-    document.getElementById('modalTitle').innerText = "Add Lead";
-    document.getElementById('leadForm').reset();
+
+document.addEventListener('DOMContentLoaded', function () {
+
+const selectAll = document.getElementById('selectAll');
+const selectAllBottom = document.getElementById('selectAllBottom');
+
+const checkboxes = document.querySelectorAll('.lead-checkbox');
+
+const selectedCount = document.getElementById('selectedCount');
+const selectedCountBottom = document.getElementById('selectedCountBottom');
+
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+/*
+|--------------------------------------------------------------------------
+| Update selected count
+|--------------------------------------------------------------------------
+*/
+
+function updateSelectedCount() {
+
+    const selected = document.querySelectorAll(
+        '.lead-checkbox:checked'
+    ).length;
+
+    if (selectedCount) {
+        selectedCount.innerText =
+            selected + ' selected';
+    }
+
+    if (selectedCountBottom) {
+        selectedCountBottom.innerText =
+            selected + ' selected';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable / Disable bulk delete
+    |--------------------------------------------------------------------------
+    */
+
+    if (bulkDeleteBtn) {
+
+        bulkDeleteBtn.disabled =
+            selected === 0;
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Select all state
+    |--------------------------------------------------------------------------
+    */
+
+    const total = checkboxes.length;
+
+    if (selectAll) {
+
+        selectAll.checked =
+            total > 0 && selected === total;
+
+        selectAll.indeterminate =
+            selected > 0 && selected < total;
+
+    }
+
+    if (selectAllBottom) {
+
+        selectAllBottom.checked =
+            total > 0 && selected === total;
+
+    }
+
 }
+
+/*
+|--------------------------------------------------------------------------
+| Select / deselect all
+|--------------------------------------------------------------------------
+*/
+
+function toggleAll(checked) {
+
+    checkboxes.forEach(function (checkbox) {
+
+        checkbox.checked = checked;
+
+    });
+
+    updateSelectedCount();
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Top select all
+|--------------------------------------------------------------------------
+*/
+
+if (selectAll) {
+
+    selectAll.addEventListener('change', function () {
+
+        toggleAll(this.checked);
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Bottom select all
+|--------------------------------------------------------------------------
+*/
+
+if (selectAllBottom) {
+
+    selectAllBottom.addEventListener('change', function () {
+
+        toggleAll(this.checked);
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Individual checkbox
+|--------------------------------------------------------------------------
+*/
+
+checkboxes.forEach(function (checkbox) {
+
+    checkbox.addEventListener('change', function () {
+
+        updateSelectedCount();
+
+    });
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| Initial state
+|--------------------------------------------------------------------------
+*/
+
+updateSelectedCount();
+
+});
+
+/*
+|--------------------------------------------------------------------------
+Bulk delete confirmation
+*/
+
+function confirmBulkDelete() {
+
+const selected =
+    document.querySelectorAll('.lead-checkbox:checked').length;
+
+if (selected === 0) {
+
+    alert('Please select at least one lead.');
+
+    return false;
+
+}
+
+return confirm(
+    'Are you sure you want to delete ' +
+    selected +
+    ' selected lead(s)?'
+);
+
+}
+
+/*
+|--------------------------------------------------------------------------
+Add Lead Modal
+*/
+
+function openModal() {
+
+document.getElementById('leadModal').style.display = 'flex';
+
+document.getElementById('leadForm').action =
+    "{{ route('leads.store') }}";
+
+document.getElementById('methodField').value = '';
+
+document.getElementById('modalTitle').innerText =
+    "Add Lead";
+
+document.getElementById('leadForm').reset();
+
+}
+
+/*
+|--------------------------------------------------------------------------
+Close Lead Modal
+*/
 
 function closeModal() {
-    document.getElementById('leadModal').style.display = 'none';
+
+document.getElementById('leadModal').style.display =
+    'none';
+
 }
 
-function editLead(id, company_name, director, phone, email, city, address, country_id, activity_type_id, status) {
-    openModal();
+/*
+|--------------------------------------------------------------------------
+Edit Lead
+*/
 
-    document.getElementById('modalTitle').innerText = "Edit Lead";
-    document.getElementById('leadForm').action = "{{ url('admin/leads') }}/" + id;
-    document.getElementById('methodField').value = "PUT";
+function editLead(
+id,
+company_name,
+director,
+phone,
+email,
+city,
+address,
+country_id,
+activity_type_id,
+status
+) {
 
-    document.getElementById('company_name').value = company_name;
-    document.getElementById('director').value = director || '';
-    document.getElementById('phone').value = phone;
-    document.getElementById('email').value = email || '';
-    document.getElementById('city').value = city || '';
-    document.getElementById('address').value = address || '';
-    document.getElementById('country_id').value = country_id;
-    document.getElementById('activity_type_id').value = activity_type_id;
-    document.getElementById('status').value = status;
+openModal();
+
+document.getElementById('modalTitle').innerText =
+    "Edit Lead";
+
+document.getElementById('leadForm').action =
+    "{{ url('admin/leads') }}/" + id;
+
+document.getElementById('methodField').value =
+    "PUT";
+
+document.getElementById('company_name').value =
+    company_name;
+
+document.getElementById('director').value =
+    director || '';
+
+document.getElementById('phone').value =
+    phone;
+
+document.getElementById('email').value =
+    email || '';
+
+document.getElementById('city').value =
+    city || '';
+
+document.getElementById('address').value =
+    address || '';
+
+document.getElementById('country_id').value =
+    country_id;
+
+document.getElementById('activity_type_id').value =
+    activity_type_id;
+
+document.getElementById('status').value =
+    status;
+
 }
+
+/*
+|--------------------------------------------------------------------------
+Close modal when clicking outside
+*/
+
+window.addEventListener('click', function (event) {
+
+const leadModal =
+    document.getElementById('leadModal');
+
+const importModal =
+    document.getElementById('importModal');
+
+if (event.target === leadModal) {
+
+    closeModal();
+
+}
+
+if (event.target === importModal) {
+
+    importModal.style.display = 'none';
+
+}
+
+});
 </script>
 
-{{-- ================= STYLES ================= --}}
+{{-- ========================================================= --}}
+{{-- STYLES --}}
+{{-- ========================================================= --}}
 <style>
 
-/* ALERT */
+/* =========================================================
+ALERT
+========================================================= */
+
 .alert.success {
-    background:#d1fae5;
-    color:#065f46;
-    padding:10px;
-    border-radius:6px;
-    margin-bottom:15px;
-    text-align:center;
+background:#d1fae5;
+color:#065f46;
+padding:10px;
+border-radius:6px;
+margin-bottom:15px;
+text-align:center;
 }
 
 .alert.error {
-    background:#fee2e2;
-    color:#991b1b;
-    padding:10px;
-    border-radius:6px;
-    margin-bottom:15px;
-    text-align:center;
+background:#fee2e2;
+color:#991b1b;
+padding:10px;
+border-radius:6px;
+margin-bottom:15px;
+text-align:center;
 }
 
-/* STATS */
+/* =========================================================
+STATS
+========================================================= */
+
 .stats-grid {
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-    gap:15px;
-    margin-bottom:20px;
+display:grid;
+grid-template-columns:
+repeat(auto-fit, minmax(200px,1fr));
+
+gap:15px;
+margin-bottom:20px;
+
 }
 
 .stat-card {
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+background:#fff;
+padding:20px;
+border-radius:10px;
+
+box-shadow:
+    0 4px 10px rgba(0,0,0,0.05);
+
 }
 
 .stat-card h3 {
-    font-size:14px;
-    color:#777;
+font-size:14px;
+color:#777;
 }
 
 .stat-card p {
-    font-size:26px;
-    font-weight:bold;
-    color:#1E4BA6;
+font-size:26px;
+font-weight:bold;
+color:#1E4BA6;
 }
 
-/* TABLE */
+/* =========================================================
+TABLE CARD
+========================================================= */
+
 .table-card {
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+background:#fff;
+padding:20px;
+border-radius:10px;
+
+box-shadow:
+    0 4px 10px rgba(0,0,0,0.05);
+
+}
+
+.table-header-actions {
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:15px;
+margin-bottom:15px;
+}
+
+.table-header-actions strong {
+font-size:18px;
+color:#333;
+}
+
+.selected-count {
+margin-left:10px;
+color:#777;
+font-size:13px;
+}
+
+/* =========================================================
+TABLE
+========================================================= */
+
+.table-responsive {
+width:100%;
+overflow-x:auto;
 }
 
 table {
-    width:100%;
-    border-collapse:collapse;
+width:100%;
+border-collapse:collapse;
 }
 
-th, td {
-    padding:12px;
-    border-bottom:1px solid #eee;
+th,
+td {
+padding:12px;
+border-bottom:1px solid #eee;
 }
 
 th {
-    background:#1E4BA6;
-    color:#fff;
+background:#1E4BA6;
+color:#fff;
 }
 
 tr:hover {
-    background:#f5f8ff;
+background:#f5f8ff;
 }
 
-/* STATUS BADGE */
+/* =========================================================
+CHECKBOX
+========================================================= */
+
+input[type="checkbox"] {
+width:17px;
+height:17px;
+cursor:pointer;
+accent-color:#1E4BA6;
+}
+
+/* =========================================================
+STATUS BADGE
+========================================================= */
+
 .status-badge {
-    padding:4px 10px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:600;
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:600;
 }
 
-.status-badge.new { background:#dbeafe; color:#1e40af; }
-.status-badge.contacted { background:#fef3c7; color:#92400e; }
-.status-badge.email-sent { background:#e0e7ff; color:#4338ca; }
-.status-badge.converted { background:#d1fae5; color:#065f46; }
-.status-badge.lost { background:#fee2e2; color:#991b1b; }
+.status-badge.new {
+background:#dbeafe;
+color:#1e40af;
+}
 
-/* ACTION */
+.status-badge.contacted {
+background:#fef3c7;
+color:#92400e;
+}
+
+.status-badge.email-sent {
+background:#e0e7ff;
+color:#4338ca;
+}
+
+.status-badge.converted {
+background:#d1fae5;
+color:#065f46;
+}
+
+.status-badge.lost {
+background:#fee2e2;
+color:#991b1b;
+}
+
+/* =========================================================
+ACTION
+========================================================= */
+
 .action-row {
-    display:flex;
-    gap:5px;
+display:flex;
+gap:5px;
+align-items:center;
+flex-wrap:wrap;
 }
 
-/* BUTTONS */
+/* =========================================================
+BUTTONS
+========================================================= */
+
 .btn-xs {
-    padding:4px 8px;
-    font-size:12px;
-    border-radius:4px;
-    border:none;
-    cursor:pointer;
+padding:4px 8px;
+font-size:12px;
+border-radius:4px;
+border:none;
+cursor:pointer;
 }
 
-.btn.success { background:#38a169; color:#fff; }
-.btn.danger { background:#e53e3e; color:#fff; }
-.btn.info { background:#3b82f6; color:#fff; }
-.btn.warning { background:#f59e0b; color:#fff; }
+.btn.success {
+background:#38a169;
+color:#fff;
+}
+
+.btn.danger {
+background:#e53e3e;
+color:#fff;
+}
+
+.btn.info {
+background:#3b82f6;
+color:#fff;
+}
+
+.btn.warning {
+background:#f59e0b;
+color:#fff;
+}
 
 .btn-primary {
-    background:#1E4BA6;
-    color:#fff;
-    padding:8px 14px;
-    border-radius:6px;
-    border:none;
-    cursor:pointer;
+background:#1E4BA6;
+color:#fff;
+
+padding:8px 14px;
+
+border-radius:6px;
+
+border:none;
+
+cursor:pointer;
+
+text-decoration:none;
+
 }
 
-/* MODAL */
+.btn-secondary {
+background:#6b7280;
+color:#fff;
+
+padding:8px 14px;
+
+border-radius:6px;
+
+border:none;
+
+cursor:pointer;
+
+text-decoration:none;
+
+display:inline-block;
+
+}
+
+/* =========================================================
+BULK DELETE
+========================================================= */
+
+.bulk-delete-btn {
+padding:7px 12px;
+font-size:13px;
+}
+
+.bulk-delete-btn:disabled {
+background:#d1d5db;
+color:#6b7280;
+cursor:not-allowed;
+opacity:0.8;
+}
+
+.bulk-footer {
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+margin-top:15px;
+padding-top:12px;
+
+border-top:1px solid #eee;
+
+}
+
+.bulk-info {
+display:flex;
+align-items:center;
+gap:8px;
+
+font-size:13px;
+color:#555;
+
+}
+
+.bulk-info label {
+cursor:pointer;
+}
+
+/* =========================================================
+MODAL
+========================================================= */
+
 .modal {
-    display:none;
-    position:fixed;
-    top:0; left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
-    justify-content:center;
-    align-items:center;
+display:none;
+
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:rgba(0,0,0,0.5);
+
+justify-content:center;
+align-items:center;
+
+z-index:9999;
+
 }
 
 .modal-content {
-    background:#fff;
-    padding:25px;
-    border-radius:10px;
-    width:400px;
+background:#fff;
+
+padding:25px;
+
+border-radius:10px;
+
+width:400px;
+
+max-width:90%;
+
+max-height:90vh;
+
+overflow-y:auto;
+
 }
 
 .modal-content input,
 .modal-content textarea,
 .input-field {
-    width:100%;
-    margin-bottom:10px;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    font-family:inherit;
+width:100%;
+
+margin-bottom:10px;
+
+padding:10px;
+
+border:1px solid #ccc;
+
+border-radius:6px;
+
+font-family:inherit;
+
+box-sizing:border-box;
+
 }
 
 .modal-actions {
-    display:flex;
-    justify-content:space-between;
+display:flex;
+
+justify-content:space-between;
+
+gap:10px;
+
 }
 
-/* SEARCH */
+/* =========================================================
+SEARCH
+========================================================= */
+
 .search-box {
-    display:flex;
-    gap:10px;
-    margin-bottom:15px;
-    flex-wrap:wrap;
+display:flex;
+
+gap:10px;
+
+margin-bottom:15px;
+
+flex-wrap:wrap;
+
 }
 
 .search-box input {
-    flex:1;
-    min-width:200px;
-    padding:8px;
-    border:1px solid #ccc;
-    border-radius:6px;
+flex:1;
+
+min-width:200px;
+
+padding:8px;
+
+border:1px solid #ccc;
+
+border-radius:6px;
+
 }
 
 .filter-select {
-    padding:8px;
-    border:1px solid #ccc;
-    border-radius:6px;
+padding:8px;
+
+border:1px solid #ccc;
+
+border-radius:6px;
+
 }
 
-.btn-secondary {
-    background:#6b7280;
-    color:#fff;
-    padding:8px 14px;
-    border-radius:6px;
-    border:none;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-block;
-}
+/* =========================================================
+TEXT
+========================================================= */
 
-/* TEXT */
 .muted {
-    color:#777;
-    font-size:12px;
+color:#777;
+}
+
+.small {
+font-size:12px;
 }
 
 .tag {
-    background:#e3f2fd;
-    padding:4px 8px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:600;
+background:#e3f2fd;
+
+padding:4px 8px;
+
+border-radius:20px;
+
+font-size:12px;
+
+font-weight:600;
+
 }
 
-/* PAGINATION */
+.text-center {
+text-align:center;
+}
+
+/* =========================================================
+PAGINATION
+========================================================= */
+
 .pagination-wrapper {
-    display:flex;
-    gap:8px;
-    justify-content:center;
-    margin-top:20px;
-    flex-wrap:wrap;
+display:flex;
+
+gap:8px;
+
+justify-content:center;
+
+margin-top:20px;
+
+flex-wrap:wrap;
+
 }
 
 .pagination-wrapper a,
 .pagination-wrapper span {
-    padding:6px 12px;
-    border-radius:6px;
-    text-decoration:none;
-    font-weight:600;
-    border:1px solid #ccc;
+padding:6px 12px;
+
+border-radius:6px;
+
+text-decoration:none;
+
+font-weight:600;
+
+border:1px solid #ccc;
+
 }
 
 .pagination-wrapper a {
-    background:#fff;
-    color:#1E4BA6;
+background:#fff;
+
+color:#1E4BA6;
+
 }
 
 .pagination-wrapper a:hover {
-    background:#F4C542;
-    color:#111;
+background:#F4C542;
+
+color:#111;
+
 }
 
 .pagination-wrapper .active {
-    background:#1E4BA6;
-    color:#fff;
-    border-color:#1E4BA6;
+background:#1E4BA6;
+
+color:#fff;
+
+border-color:#1E4BA6;
+
 }
 
 .pagination-wrapper .disabled {
-    opacity:0.5;
-    cursor:not-allowed;
+opacity:0.5;
+
+cursor:not-allowed;
+
 }
 
-/* RESPONSIVE */
-@media(max-width:768px){
-    .modal-content { width:90%; }
+/* =========================================================
+RESPONSIVE
+========================================================= */
+
+@media(max-width:768px) {
+
+.modal-content {
+    width:90%;
 }
 
+.table-card {
+    padding:10px;
+}
+
+.table-header-actions {
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.bulk-footer {
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+}
+
+.top-bar {
+    flex-direction:column;
+    gap:15px;
+}
+
+.top-bar > div {
+    flex-wrap:wrap;
+}
+
+}
 </style>
 
 @endsection

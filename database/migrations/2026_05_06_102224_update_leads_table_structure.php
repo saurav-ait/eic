@@ -34,7 +34,7 @@ return new class extends Migration
             }
 
             if (Schema::hasColumn('leads', 'status')) {
-                $table->enum('status', ['New','Contacted','Converted','Lost'])->default('New')->change();
+                $table->enum('status', ['New','Contacted','Email Sent','Converted','Lost'])->default('New')->change();
             }
         });
 

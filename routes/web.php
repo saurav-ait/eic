@@ -279,11 +279,18 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
         Route::post('leads', [LeadController::class, 'store'])->name('leads.store');
         Route::put('leads/{id}', [LeadController::class, 'update'])->name('leads.update');
+
+        // Bulk delete — IMPORTANT: put this before leads/{id}
+        Route::delete('leads/bulk-delete', [LeadController::class, 'bulkDelete'])
+            ->name('leads.bulkDelete');
+
         Route::delete('leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
+
         Route::post('leads/import', [LeadController::class, 'import'])->name('leads.import');
         Route::get('leads/export', [LeadController::class, 'export'])->name('leads.export');
         Route::post('leads/{id}/send-email', [LeadController::class, 'sendEmail'])->name('leads.send-email');
         Route::post('leads/{id}/send-text', [LeadController::class, 'sendText'])->name('leads.send-text');
+
         
         /*
         |---------------- ACTIVITY TYPES MANAGEMENT ----------------|
