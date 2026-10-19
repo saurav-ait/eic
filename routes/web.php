@@ -162,14 +162,14 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
     Route::post('/logout', [UserController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+
     /*
     |--------------------------------------------------------------------------
-    | ADMIN PANEL
+    | For ADMIN and Employee PANEL
     |--------------------------------------------------------------------------
     */
 
-    Route::prefix('admin')->middleware('role:Admin')->group(function () {
-
+    Route::prefix('admin')->middleware('role:Admin|Employee')->group(function () {
         /*
         |---------------- ACCOUNTS ----------------|
         */
@@ -185,6 +185,56 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::get('accounts/ledger/{vendor}/pdf', [AccountController::class, 'exportLedgerPDF'])->name('accounts.ledger.pdf');
         Route::get('accounts/ledger/{vendor}', [AccountController::class, 'ledger'])->name('accounts.ledger');
         Route::get('accounts/vendors', [AccountController::class, 'vendorlist'])->name('accounts.vendors');
+
+
+        /*
+        |------------------CoUNTRY MANAGEMENT------------------|
+        */
+        Route::get('countries', [CountryController::class, 'index'])->name('country.index');
+        Route::post('countries', [CountryController::class, 'store'])->name('country.store');
+        Route::put('countries/{id}', [CountryController::class, 'update'])->name('country.update');
+        Route::delete('countries/{id}', [CountryController::class, 'destroy'])->name('country.destroy');
+
+        /*
+        |------------------LAWYER MANAGEMENT------------------|
+         */
+        Route::get('lawyers', [LawyerController::class, 'lawyerindex'])->name('lawyer.index');
+        Route::post('lawyers', [LawyerController::class, 'storelawyer'])->name('lawyer.store');
+        Route::put('lawyers/{lawyer}', [LawyerController::class, 'updatelawyer'])->name('lawyer.update');
+        Route::delete('lawyers/{lawyer}', [LawyerController::class, 'destroylawyer'])->name('lawyer.destroy');
+
+        /*
+        |---------------- ACTIVITY TYPES MANAGEMENT ----------------|
+        */
+        Route::get('activities', [ActivityTypeController::class, 'index'])->name('activities.index');
+        Route::post('activities', [ActivityTypeController::class, 'store'])->name('activities.store');
+        Route::put('activities/{id}', [ActivityTypeController::class, 'update'])->name('activities.update');
+        Route::delete('activities/{id}', [ActivityTypeController::class, 'destroy'])->name('activities.destroy');
+
+        /*
+        |------------------VENDOR MANAGEMENT------------------|
+        */
+        Route::get('vendors', [VendorController::class, 'index'])->name('vendor.index');
+        Route::post('vendors', [VendorController::class, 'store'])->name('vendor.store');
+        Route::put('vendors/{id}', [VendorController::class, 'update'])->name('vendor.update');
+        Route::delete('vendors/{id}', [VendorController::class, 'destroy'])->name('vendor.destroy');
+
+        /*
+        |------------------LAWYER GROUP MANAGEMENT------------------|
+         */
+        Route::get('lawyergroups', [LawyerController::class, 'lawyergroupindex'])->name('lawyergroup.index');
+        Route::post('lawyergroups', [LawyerController::class, 'storelawyergroup'])->name('lawyergroup.store');
+        Route::put('lawyergroups/{group}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
+        Route::delete('lawyergroups/{group}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | For ADMIN PANEL
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('admin')->middleware('role:Admin')->group(function () {
 
         /*
         |---------------- USER MANAGEMENT ----------------|
@@ -293,14 +343,6 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
 
         
         /*
-        |---------------- ACTIVITY TYPES MANAGEMENT ----------------|
-        */
-        Route::get('activities', [ActivityTypeController::class, 'index'])->name('activities.index');
-        Route::post('activities', [ActivityTypeController::class, 'store'])->name('activities.store');
-        Route::put('activities/{id}', [ActivityTypeController::class, 'update'])->name('activities.update');
-        Route::delete('activities/{id}', [ActivityTypeController::class, 'destroy'])->name('activities.destroy');
-
-        /*
         |---------------- EMAIL TEMPLATES MANAGEMENT ----------------|
         */
         Route::get('email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
@@ -330,37 +372,6 @@ Route::middleware(array_merge($csrfMiddleware, ['checkLogin']))->group(function 
         Route::put('agents/{id}', [AgentController::class, 'update'])->name('agent.update');
         Route::delete('agents/{id}', [AgentController::class, 'destroy'])->name('agent.destroy');
 
-        /*
-        |------------------CoUNTRY MANAGEMENT------------------|
-        */
-        Route::get('countries', [CountryController::class, 'index'])->name('country.index');
-        Route::post('countries', [CountryController::class, 'store'])->name('country.store');
-        Route::put('countries/{id}', [CountryController::class, 'update'])->name('country.update');
-        Route::delete('countries/{id}', [CountryController::class, 'destroy'])->name('country.destroy');
-
-        /*
-        |------------------VENDOR MANAGEMENT------------------|
-        */
-        Route::get('vendors', [VendorController::class, 'index'])->name('vendor.index');
-        Route::post('vendors', [VendorController::class, 'store'])->name('vendor.store');
-        Route::put('vendors/{id}', [VendorController::class, 'update'])->name('vendor.update');
-        Route::delete('vendors/{id}', [VendorController::class, 'destroy'])->name('vendor.destroy');
-
-        /*
-        |------------------LAWYER MANAGEMENT------------------|
-         */
-        Route::get('lawyers', [LawyerController::class, 'lawyerindex'])->name('lawyer.index');
-        Route::post('lawyers', [LawyerController::class, 'storelawyer'])->name('lawyer.store');
-        Route::put('lawyers/{lawyer}', [LawyerController::class, 'updatelawyer'])->name('lawyer.update');
-        Route::delete('lawyers/{lawyer}', [LawyerController::class, 'destroylawyer'])->name('lawyer.destroy');
-
-        /*
-        |------------------LAWYER GROUP MANAGEMENT------------------|
-         */
-        Route::get('lawyergroups', [LawyerController::class, 'lawyergroupindex'])->name('lawyergroup.index');
-        Route::post('lawyergroups', [LawyerController::class, 'storelawyergroup'])->name('lawyergroup.store');
-        Route::put('lawyergroups/{group}', [LawyerController::class, 'updatelawyergroup'])->name('lawyergroup.update');
-        Route::delete('lawyergroups/{group}', [LawyerController::class, 'destroylawyergroup'])->name('lawyergroup.destroy');
 
         /*
         |------------------SUBMISSION MANAGEMENT------------------|

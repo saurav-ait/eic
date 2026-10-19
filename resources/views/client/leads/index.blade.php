@@ -153,6 +153,8 @@
     @csrf
     @method('DELETE')
 
+</form>
+
     {{-- TABLE --}}
     <div class="table-card">
 
@@ -167,6 +169,7 @@
             </div>
 
             <button type="submit"
+                    form="bulkDeleteForm"
                     id="bulkDeleteBtn"
                     class="btn danger bulk-delete-btn"
                     onclick="return confirmBulkDelete()"
@@ -221,6 +224,7 @@
                             <td style="text-align:center;">
 
                                 <input type="checkbox"
+                                       form="bulkDeleteForm"
                                        name="ids[]"
                                        value="{{ $lead->id }}"
                                        class="lead-checkbox">
@@ -493,8 +497,6 @@
         @endif
 
     </div>
-
-</form>
 
 </main>
 
