@@ -162,6 +162,12 @@
                                 onclick="viewEntry(this)"
                                 title="View Details">👁️</button>
 
+                        <button class="icon-btn print"
+                                data-entry='@json($acc)'
+                                onclick="printEntry(this)"
+                                title="Print Transaction"
+                                aria-label="Print transaction">🖨️</button>
+
                         <button class="icon-btn edit"
                                 data-id="{{ $acc->id }}"
                                 data-entry='@json($acc)'
@@ -220,6 +226,26 @@
             </div>
         @endif
     </div>
+
+    <section id="transactionPrint" class="transaction-print" aria-hidden="true">
+        <h1>Account Transaction</h1>
+        <p>Printed on <span id="printGeneratedAt"></span></p>
+        <table>
+            <tbody>
+                <tr><th>Transaction ID</th><td id="printId"></td></tr>
+                <tr><th>Date</th><td id="printDate"></td></tr>
+                <tr><th>Entry Type</th><td id="printEntryType"></td></tr>
+                <tr><th>Vendor</th><td id="printVendorName"></td></tr>
+                <tr><th>Vendor Type</th><td id="printVendorType"></td></tr>
+                <tr><th>Amount</th><td id="printAmount"></td></tr>
+                <tr><th>Balance</th><td id="printBalance"></td></tr>
+                <tr><th>Status</th><td id="printStatus"></td></tr>
+                <tr><th>Country</th><td id="printCountry"></td></tr>
+                <tr><th>Purpose</th><td id="printPurpose"></td></tr>
+                <tr><th>Details</th><td id="printDetails"></td></tr>
+            </tbody>
+        </table>
+    </section>
 
 </main>
 {{-- FIX #4: Removed duplicate </main> tag. Only one </main> now. --}}
@@ -384,6 +410,7 @@
                         <option>Advance File Opening</option>
                         <option>Receive After Permit</option>
                         <option>Receive during Processing</option>
+                        <option>Receive After Approval</option>
                         <option>Receive After Visa</option>
                         <option>Return Against Received</option>
                         <option>Others</option>
@@ -532,6 +559,30 @@
 
         viewModal.style.display = 'flex';
     };
+
+    window.printEntry = function (btn) {
+        const data = JSON.parse(btn.getAttribute('data-entry'));
+
+        setText('printId', data.id);
+        setText('printGeneratedAt', new Date().toLocaleString());
+        setText('printDate', data.date);
+        setText('printEntryType', data.entry_type);
+        setText('printVendorName', data.vendor_name);
+        setText('printVendorType', data.vendor_type);
+        setText('printAmount', '৳' + parseFloat(data.amount || 0).toFixed(2));
+        setText('printBalance', '৳' + parseFloat(data.balance || 0).toFixed(2));
+        setText('printStatus', data.last_status || 'Pending');
+        setText('printCountry', data.country);
+        setText('printPurpose', data.purpose);
+        setText('printDetails', data.details);
+
+        document.body.classList.add('print-transaction');
+        window.print();
+    };
+
+    window.addEventListener('afterprint', function () {
+        document.body.classList.remove('print-transaction');
+    });
 
     function setText(id, value) {
         document.getElementById(id).textContent = value || '-';
@@ -750,10 +801,37 @@ body {
     background: transparent;
 }
 .icon-btn.view   { background: #e0f2fe; }
+.icon-btn.print  { background: #dcfce7; }
 .icon-btn.edit   { background: #dbeafe; }
 .icon-btn.delete { background: #fee2e2; }
 .icon-btn:hover  { transform: scale(1.12); }
 .action-cell     { display: flex; gap: 6px; align-items: center; }
+
+.transaction-print { display: none; }
+
+@media print {
+    body.print-transaction * { visibility: hidden !important; }
+    body.print-transaction #transactionPrint,
+    body.print-transaction #transactionPrint * { visibility: visible !important; }
+    body.print-transaction #transactionPrint {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 24px;
+        color: #111;
+        background: #fff;
+        font-family: Arial, sans-serif;
+    }
+    #transactionPrint h1 { margin: 0 0 8px; text-align: center; }
+    #transactionPrint p { margin: 0 0 20px; text-align: right; font-size: 12px; }
+    #transactionPrint table { width: 100%; border-collapse: collapse; }
+    #transactionPrint th,
+    #transactionPrint td { padding: 10px; border: 1px solid #d1d5db; text-align: left; }
+    #transactionPrint th { width: 30%; background: #f3f4f6; }
+}
 
 /* MODAL OVERLAY */
 .modal {

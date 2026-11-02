@@ -38,6 +38,7 @@ return new class extends Migration
                 'Advance File Opening',
                 'Receive After Permit',
                 'Receive during Processing',
+                'Receive After Approval',
                 'Receive After Visa',
                 'Return Against Received',
                 'Others'
