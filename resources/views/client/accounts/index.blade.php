@@ -135,7 +135,7 @@
                     <th>Vendor</th>
                     <th>Vendor Type</th>
                     <th>Amount</th>
-                    <th>Balance</th>
+                    <th>Purpose</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -149,7 +149,7 @@
                     <td>{{ $acc->vendor_name }}</td>
                     <td>{{ $acc->vendor_type }}</td>
                     <td class="amount">৳{{ number_format($acc->amount, 2) }}</td>
-                    <td class="amount">৳{{ number_format($acc->balance, 2) }}</td>
+                    <td>{{ $acc->purpose }}</td>
                     <td>
                         <span class="status-badge {{ strtolower($acc->last_status ?? 'pending') }}">
                             {{ $acc->last_status ?? 'Pending' }}
@@ -189,7 +189,7 @@
 
                 @if($accounts->isEmpty())
                 <tr>
-                    <td colspan="9" style="text-align:center; color:#94a3b8; padding:30px;">
+                    <td colspan="8" style="text-align:center; color:#94a3b8; padding:30px;">
                         No entries found.
                     </td>
                 </tr>
@@ -228,23 +228,44 @@
     </div>
 
     <section id="transactionPrint" class="transaction-print" aria-hidden="true">
-        <h1>Account Transaction</h1>
-        <p>Printed on <span id="printGeneratedAt"></span></p>
-        <table>
-            <tbody>
-                <tr><th>Transaction ID</th><td id="printId"></td></tr>
-                <tr><th>Date</th><td id="printDate"></td></tr>
-                <tr><th>Entry Type</th><td id="printEntryType"></td></tr>
-                <tr><th>Vendor</th><td id="printVendorName"></td></tr>
-                <tr><th>Vendor Type</th><td id="printVendorType"></td></tr>
-                <tr><th>Amount</th><td id="printAmount"></td></tr>
-                <tr><th>Balance</th><td id="printBalance"></td></tr>
-                <tr><th>Status</th><td id="printStatus"></td></tr>
-                <tr><th>Country</th><td id="printCountry"></td></tr>
-                <tr><th>Purpose</th><td id="printPurpose"></td></tr>
-                <tr><th>Details</th><td id="printDetails"></td></tr>
-            </tbody>
-        </table>
+        <img class="transaction-pad-image" src="{{ asset('images/svs-pad.jpeg') }}" alt="">
+        <div class="transaction-print-content">
+            <div class="transaction-print-heading">
+                <div>
+                    <span class="transaction-print-eyebrow">ACCOUNTING</span>
+                    <h1>Transaction Receipt</h1>
+                </div>
+                <div class="transaction-print-reference">
+                    <span>Receipt No.</span>
+                    <strong id="printId"></strong>
+                </div>
+            </div>
+
+            <div class="transaction-print-meta">
+                <span>Printed on</span>
+                <strong id="printGeneratedAt"></strong>
+            </div>
+
+            <table class="transaction-print-table">
+                <tbody>
+                    <tr><th>Date</th><td id="printDate"></td></tr>
+                    <tr><th>Transaction Type</th><td id="printEntryType"></td></tr>
+                    <tr><th>Vendor / Payee</th><td id="printVendorName"></td></tr>
+                    <tr><th>Vendor Type</th><td id="printVendorType"></td></tr>
+                    <tr class="transaction-print-amount"><th>Amount</th><td id="printAmount"></td></tr>
+                    {{-- <tr><th>Running Balance</th><td id="printBalance"></td></tr> --}}
+                    <tr><th>Status</th><td id="printStatus"></td></tr>
+                    <tr><th>Country</th><td id="printCountry"></td></tr>
+                    <tr><th>Purpose</th><td id="printPurpose"></td></tr>
+                    <tr><th>Details</th><td id="printDetails"></td></tr>
+                </tbody>
+            </table>
+
+            <div class="transaction-print-signatures">
+                <div><span>Received / Processed by</span></div>
+                <div><span>Authorized signature</span></div>
+            </div>
+        </div>
     </section>
 
 </main>
@@ -366,8 +387,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="formVendorType">Vendor Type</label>
-                    <select name="vendor_type" id="formVendorType">
+                    <label for="formVendorType">Vendor Type <span style="color:red;">*</span></label>
+                    <select name="vendor_type" id="formVendorType" required>
                         <option value="">Select</option>
                         <option>Client</option>
                         <option>Agent</option>
@@ -404,8 +425,8 @@
                 </div>
 
                 <div class="form-group full">
-                    <label for="formPurpose">Purpose</label>
-                    <select name="purpose" id="formPurpose">
+                    <label for="formPurpose">Purpose <span style="color:red;">*</span></label>
+                    <select name="purpose" id="formPurpose" required>
                         <option value="">Select</option>
                         <option>Advance File Opening</option>
                         <option>Receive After Permit</option>
@@ -570,7 +591,7 @@
         setText('printVendorName', data.vendor_name);
         setText('printVendorType', data.vendor_type);
         setText('printAmount', '৳' + parseFloat(data.amount || 0).toFixed(2));
-        setText('printBalance', '৳' + parseFloat(data.balance || 0).toFixed(2));
+        // setText('printBalance', '৳' + parseFloat(data.balance || 0).toFixed(2));
         setText('printStatus', data.last_status || 'Pending');
         setText('printCountry', data.country);
         setText('printPurpose', data.purpose);
@@ -810,27 +831,150 @@ body {
 .transaction-print { display: none; }
 
 @media print {
-    body.print-transaction * { visibility: hidden !important; }
-    body.print-transaction #transactionPrint,
-    body.print-transaction #transactionPrint * { visibility: visible !important; }
+    @page { size: A4 portrait; margin: 0; }
+
+    html,
+    body.print-transaction {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #fff !important;
+    }
+
+    body.print-transaction .dashboard-wrapper {
+        display: block !important;
+        width: 210mm !important;
+        min-height: 0 !important;
+        height: 297mm !important;
+        overflow: hidden !important;
+    }
+    body.print-transaction .dashboard-wrapper > .sidebar,
+    body.print-transaction .main-content > :not(#transactionPrint) {
+        display: none !important;
+    }
+    body.print-transaction .dashboard-wrapper > .main-content {
+        position: relative !important;
+        display: block !important;
+        width: 210mm !important;
+        min-height: 0 !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
     body.print-transaction #transactionPrint {
         display: block !important;
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
+        width: 210mm !important;
+        height: 297mm !important;
         box-sizing: border-box;
-        padding: 24px;
         color: #111;
         background: #fff;
         font-family: Arial, sans-serif;
+        overflow: hidden;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
-    #transactionPrint h1 { margin: 0 0 8px; text-align: center; }
-    #transactionPrint p { margin: 0 0 20px; text-align: right; font-size: 12px; }
-    #transactionPrint table { width: 100%; border-collapse: collapse; }
-    #transactionPrint th,
-    #transactionPrint td { padding: 10px; border: 1px solid #d1d5db; text-align: left; }
-    #transactionPrint th { width: 30%; background: #f3f4f6; }
+    .transaction-pad-image {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 210mm;
+        height: 297mm;
+        object-fit: fill;
+    }
+    .transaction-print-content {
+        position: absolute;
+        top: 49mm;
+        left: 15mm;
+        width: 180mm;
+        max-height: 205mm;
+        box-sizing: border-box;
+        padding: 7mm 8mm;
+        border: 1px solid #d9e1eb;
+        background: #fff;
+        overflow: hidden;
+    }
+    .transaction-print-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 5mm;
+        border-bottom: 2px solid #17365d;
+    }
+    .transaction-print-eyebrow {
+        color: #168c91;
+        font-size: 8pt;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+    #transactionPrint h1 {
+        margin: 2mm 0 0;
+        color: #17365d;
+        font-size: 20pt;
+    }
+    .transaction-print-reference {
+        display: flex;
+        flex-direction: column;
+        gap: 2mm;
+        color: #526174;
+        font-size: 9pt;
+        text-align: right;
+    }
+    .transaction-print-reference strong {
+        color: #17365d;
+        font-size: 13pt;
+    }
+    .transaction-print-meta {
+        display: flex;
+        justify-content: flex-end;
+        gap: 2mm;
+        padding: 4mm 0;
+        color: #526174;
+        font-size: 8pt;
+    }
+    .transaction-print-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    .transaction-print-table th,
+    .transaction-print-table td {
+        padding: 3mm;
+        border: 1px solid #d9e1eb;
+        text-align: left;
+        vertical-align: top;
+        font-size: 9pt;
+        overflow-wrap: anywhere;
+    }
+    .transaction-print-table th {
+        width: 34%;
+        color: #17365d;
+        background: #f1f5f9;
+        font-weight: 700;
+    }
+    .transaction-print-table .transaction-print-amount td {
+        color: #087f5b;
+        font-size: 13pt;
+        font-weight: 700;
+    }
+    .transaction-print-signatures {
+        display: flex;
+        justify-content: space-between;
+        gap: 20mm;
+        margin-top: 17mm;
+    }
+    .transaction-print-signatures div {
+        width: 50%;
+        padding-top: 3mm;
+        border-top: 1px solid #526174;
+        color: #526174;
+        font-size: 8pt;
+    }
 }
 
 /* MODAL OVERLAY */

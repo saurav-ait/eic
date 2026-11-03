@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Account;
 use App\Models\Vendor;
 use App\Models\Country;
@@ -17,8 +18,8 @@ use App\Jobs\RecalculateAccountBalances;
 
 class AccountController extends Controller
 {
-    private $incomeTypes = ['Received', 'Receivable'];
-    private $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
+    private $incomeTypes = Account::INCOME_TYPES;
+    private $expenseTypes = Account::EXPENSE_TYPES;
 
     /* =======================================================
      * INDEX
@@ -123,7 +124,9 @@ class AccountController extends Controller
         $account = Account::findOrFail($id);
 
         $validated = $request->validate($this->accountRules());
-        $data = $request->except('document');
+        $previousVendorName = $account->vendor_name;
+        $data = $validated;
+        unset($data['document']);
 
         if ($request->hasFile('document')) {
             if ($account->document) {
@@ -135,6 +138,9 @@ class AccountController extends Controller
         $data['last_status'] = $validated['last_status'] ?? 'Pending';
         $account->update($data);
 
+        if ($previousVendorName !== $account->vendor_name) {
+            RecalculateAccountBalances::dispatchSync($previousVendorName);
+        }
         RecalculateAccountBalances::dispatchSync($account->vendor_name);
 
         return back()->with('success', 'Updated');
@@ -254,14 +260,14 @@ class AccountController extends Controller
     {
         return [
             'date' => 'required|date',
-            'entry_type' => 'required|string|max:255',
+            'entry_type' => ['required', Rule::in(Account::ENTRY_TYPES)],
             'vendor_name' => 'required|string|max:255',
-            'vendor_type' => 'nullable|string|max:255',
-            'purpose' => 'nullable|string|max:255',
+            'vendor_type' => ['required', Rule::in(Account::VENDOR_TYPES)],
+            'purpose' => ['required', Rule::in(Account::PURPOSES)],
             'details' => 'nullable|string|max:1000',
             'country' => 'nullable|string|max:255',
-            'amount' => 'required|numeric',
-            'last_status' => 'nullable|in:Pending,Approved,Rejected,Processing,Completed',
+            'amount' => 'required|numeric|min:0|max:9999999999.99',
+            'last_status' => ['nullable', Rule::in(Account::STATUSES)],
             'document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ];
     }
@@ -339,11 +345,23 @@ class AccountController extends Controller
         $reportLabel = '';
         $accountsQuery = Account::query();
 
-        if ($request->filled('from_date') && $request->filled('to_date')) {
-            $fromDate = $request->from_date;
-            $toDate = $request->to_date;
-            $accountsQuery->whereBetween('date', [$fromDate, $toDate]);
-            $reportLabel = date('F j, Y', strtotime($fromDate)) . ' - ' . date('F j, Y', strtotime($toDate));
+        if ($request->filled('from_date') || $request->filled('to_date')) {
+            if ($request->filled('from_date')) {
+                $accountsQuery->whereDate('date', '>=', $request->from_date);
+            }
+
+            if ($request->filled('to_date')) {
+                $accountsQuery->whereDate('date', '<=', $request->to_date);
+            }
+
+            if ($request->filled('from_date') && $request->filled('to_date')) {
+                $reportLabel = date('F j, Y', strtotime($request->from_date))
+                    . ' - ' . date('F j, Y', strtotime($request->to_date));
+            } elseif ($request->filled('from_date')) {
+                $reportLabel = 'From ' . date('F j, Y', strtotime($request->from_date));
+            } else {
+                $reportLabel = 'Through ' . date('F j, Y', strtotime($request->to_date));
+            }
         } else {
             $month = $request->month ?? now()->format('Y-m');
             $accountsQuery->whereMonth('date', date('m', strtotime($month)))
@@ -498,7 +516,7 @@ class AccountController extends Controller
         $openingBalance = 0;
 
         if ($fromDate) {
-            $openingBalance = Account::when($request->vendor, fn($q) => $q->where('vendor_name', $request->vendor))
+            $openingBalance = (clone $query)
                 ->whereDate('date', '<', $fromDate)
                 ->selectRaw("SUM(CASE WHEN entry_type IN ('" . implode("','", $this->incomeTypes) . "') THEN amount 
                                  WHEN entry_type IN ('" . implode("','", $this->expenseTypes) . "') THEN -amount ELSE 0 END) as balance")

@@ -30,9 +30,6 @@ class RecalculateAccountBalances implements ShouldQueue
      */
     public function handle(): void
     {
-        $incomeTypes = ['Received', 'Receivable'];
-        $expenseTypes = ['Payment', 'Payable', 'Purchase', 'Salary', 'Office costs'];
-
         $vendors = $this->vendorName
             ? [$this->vendorName]
             : Account::distinct()->pluck('vendor_name');
@@ -46,9 +43,9 @@ class RecalculateAccountBalances implements ShouldQueue
             $balance = 0;
 
             foreach ($accounts as $acc) {
-                if (in_array($acc->entry_type, $incomeTypes)) {
+                if (in_array($acc->entry_type, Account::INCOME_TYPES, true)) {
                     $balance += $acc->amount;
-                } elseif (in_array($acc->entry_type, $expenseTypes)) {
+                } elseif (in_array($acc->entry_type, Account::EXPENSE_TYPES, true)) {
                     $balance -= $acc->amount;
                 }
                 $acc->updateQuietly(['balance' => $balance]);
