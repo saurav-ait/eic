@@ -14,14 +14,16 @@ class LeadEmail extends Mailable
 
     public $subject;
     public $body;
+    public $headerName;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($subject, $body)
+    public function __construct($subject, $body, $headerName = null)
     {
         $this->subject = $subject;
         $this->body = $body;
+        $this->headerName = $headerName ?? config('app.name');
     }
 
     /**
@@ -41,6 +43,9 @@ class LeadEmail extends Mailable
     {
         return new Content(
             view: 'emails.lead',
+            with: [
+                'headerName' => $this->headerName,
+            ],
         );
     }
 

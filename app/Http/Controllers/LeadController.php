@@ -183,7 +183,11 @@ class LeadController extends Controller
 
         try {
             // Send email using Mailgun
-            Mail::to($lead->email)->send(new LeadEmail($subject, $body));
+            Mail::to($lead->email)->send(new LeadEmail(
+                $subject,
+                $body,
+                $lead->company_name ?? config('app.name')
+            ));
             
             Log::info('Email sent successfully to: ' . $lead->email);
             
