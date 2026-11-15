@@ -61,4 +61,23 @@ class LeadsImportTest extends TestCase
         $this->assertSame(1, $lead->activity_type_id);
         $this->assertSame('Email Sent', $lead->status);
     }
+
+    public function test_it_normalizes_status_variants_from_imported_data(): void
+    {
+        $lead = (new LeadsImport)->model([
+            'company_name' => 'Acme Ltd',
+            'director' => 'Jane Doe',
+            'phone' => '+33 1 00 00 00 00',
+            'email' => 'jane@example.com',
+            'city' => 'Paris',
+            'address' => '1 Rue de la Paix',
+            'country' => 'france',
+            'activity_type' => 'consulting',
+            'status' => 'email_sent',
+        ]);
+
+        $this->assertSame('Email Sent', $lead->status);
+        $this->assertSame(1, $lead->country_id);
+        $this->assertSame(1, $lead->activity_type_id);
+    }
 }

@@ -32,7 +32,7 @@ class LeadsImport implements ToModel, WithHeadingRow
                 return $row[$key];
             }
 
-            $normalized = strtolower(str_replace(' ', '_', $key));
+            $normalized = strtolower(str_replace([' ', '-', '/'], '_', $key));
             if (array_key_exists($normalized, $row) && $row[$normalized] !== null && $row[$normalized] !== '') {
                 return $row[$normalized];
             }
@@ -60,7 +60,9 @@ class LeadsImport implements ToModel, WithHeadingRow
         }
 
         $lookup = trim((string) $value);
-        $id = $modelClass::query()->where('name', $lookup)->value('id');
+        $id = $modelClass::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower($lookup)])
+            ->value('id');
 
         if ($id === null) {
             throw new \InvalidArgumentException(sprintf('%s "%s" was not found.', $keys[0], $lookup));
@@ -73,6 +75,22 @@ class LeadsImport implements ToModel, WithHeadingRow
     {
         $status = trim((string) ($value ?? 'New'));
 
-        return $status !== '' ? $status : 'New';
+        if ($status === '') {
+            return 'New';
+        }
+
+        $aliases = [
+            'new' => 'New',
+            'contacted' => 'Contacted',
+            'email sent' => 'Email Sent',
+            'email_sent' => 'Email Sent',
+            'email-sent' => 'Email Sent',
+            'converted' => 'Converted',
+            'lost' => 'Lost',
+        ];
+
+        $normalized = strtolower(str_replace(['_', '-'], ' ', $status));
+
+        return $aliases[$normalized] ?? $status;
     }
 }

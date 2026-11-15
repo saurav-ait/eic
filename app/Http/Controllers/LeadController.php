@@ -85,6 +85,10 @@ class LeadController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'status' => $this->normalizeStatus($request->input('status')),
+        ]);
+
         $request->validate([
             'country_id' => 'required|exists:countries,id',
             'activity_type_id' => 'required|exists:activity_types,id',
@@ -105,6 +109,10 @@ class LeadController extends Controller
     public function update(Request $request, int $id)
     {
         $lead = Lead::findOrFail($id);
+
+        $request->merge([
+            'status' => $this->normalizeStatus($request->input('status')),
+        ]);
         
         $validatedData = $request->validate([
             'country_id' => 'required|exists:countries,id',
@@ -145,6 +153,27 @@ class LeadController extends Controller
         );
     }
 
+
+    private function normalizeStatus(?string $status): ?string
+    {
+        if ($status === null || trim((string) $status) === '') {
+            return null;
+        }
+
+        $aliases = [
+            'new' => 'New',
+            'contacted' => 'Contacted',
+            'email sent' => 'Email Sent',
+            'email_sent' => 'Email Sent',
+            'email-sent' => 'Email Sent',
+            'converted' => 'Converted',
+            'lost' => 'Lost',
+        ];
+
+        $normalized = strtolower(str_replace(['_', '-'], ' ', trim((string) $status)));
+
+        return $aliases[$normalized] ?? trim((string) $status);
+    }
 
     public function sendEmail(int $id)
     {
